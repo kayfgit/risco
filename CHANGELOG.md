@@ -5,6 +5,13 @@
 - A rail on both edges at once, so either thumb can open apps. The list opens beside the rail you
   pressed. Home and search are centred.
 - Removed `:left` and `:right`, which only moved the single rail.
+- Only the rail last used is drawn. Pressing the other edge switches to it, and the choice is kept.
+- The rail's letters sit right at the edge again.
+- Letting go on the rail closes the letter instead of keeping it open to tap. The hold menu inside
+  an open letter went with it; hold an app on home or in search instead.
+- The welcome text shows until the first app is opened, then goes away.
+- The clock and date are off by default. `:clock` puts them at the top, middle or bottom, or turns
+  them off.
 
 ## 0.1.0 - 2026-10-30
 

@@ -57,16 +57,13 @@ class DragTest {
     }
 
     @Test
-    fun `letting go on the rail keeps the apps open to tap`() {
+    fun `letting go on the rail cancels`() {
         val d = drag("Maps", "Messages")
         d.pressRail(yOf('M'))
-        assertEquals(Release.Pin, d.release())
-        assertEquals(Phase.PINNED, d.phase)
-
-        val y = d.panelTop + 25f
-        assertTrue(d.onPanel(listX, y))
-        d.pressPanel(listX, y)
-        assertEquals(Release.Open("Maps"), d.release())
+        assertEquals(Release.Cancel, d.release())
+        assertEquals(Phase.IDLE, d.phase)
+        assertEquals(-1, d.letter)
+        assertTrue(d.rows.isEmpty())
     }
 
     @Test

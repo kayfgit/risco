@@ -32,6 +32,9 @@ class MainActivity : Activity() {
     private lateinit var home: LinearLayout
     private lateinit var pins: LinearLayout
     private lateinit var hint: TextView
+    private lateinit var clock: View
+    private lateinit var spaceTop: View
+    private lateinit var spaceMid: View
     private lateinit var search: LinearLayout
     private lateinit var scroller: ScrollView
     private lateinit var results: LinearLayout
@@ -54,6 +57,9 @@ class MainActivity : Activity() {
         home = findViewById(R.id.home)
         pins = findViewById(R.id.pins)
         hint = findViewById(R.id.hint)
+        clock = findViewById(R.id.clock)
+        spaceTop = findViewById(R.id.space_top)
+        spaceMid = findViewById(R.id.space_mid)
         search = findViewById(R.id.search)
         scroller = findViewById(R.id.scroller)
         results = findViewById(R.id.results)
@@ -70,7 +76,9 @@ class MainActivity : Activity() {
         root.onSwipeUp = ::openSearch
         root.onSwipeDown = ::expandShade
         rail.onOpen = ::open
-        rail.onHold = ::showMenu
+        rail.side = store.railSide
+        rail.onSide = { store.railSide = it }
+        applyClock()
 
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
@@ -146,11 +154,15 @@ class MainActivity : Activity() {
             }
             pins.addView(view)
         }
-        hint.visibility = if (pins.childCount == 0) View.VISIBLE else View.GONE
+        hint.visibility = if (store.welcomed) View.GONE else View.VISIBLE
     }
 
     private fun open(app: App) {
         store.launched(app.key)
+        if (!store.welcomed) {
+            store.welcomed = true
+            hint.visibility = View.GONE
+        }
         // The app can vanish between the list being drawn and the finger lifting.
         try {
             apps.launch(app)
@@ -223,6 +235,9 @@ class MainActivity : Activity() {
         }
         is Input.Full -> when (parsed.command.arg) {
             Arg.NONE -> listOf(Hit(":${parsed.command.word}  ${parsed.command.help}", null) { run(parsed.command, null) })
+            Arg.CHOICE -> parsed.command.choicesFor(parsed.argument).map { choice ->
+                Hit(":${parsed.command.word} $choice", null) { run(parsed.command, null, choice) }
+            }
             else -> ranked(pool(parsed.command.arg), parsed.argument).map { app ->
                 Hit(":${parsed.command.word} ${app.label}", app) { run(parsed.command, app) }
             }
@@ -251,7 +266,16 @@ class MainActivity : Activity() {
             .map { it.first }
     }
 
-    private fun run(command: Command, app: App?) {
+    /** Places the clock block among home's spacers, or hides it. */
+    private fun applyClock() {
+        val position = store.clock
+        clock.visibility = if (position == "off") View.GONE else View.VISIBLE
+        spaceTop.visibility = if (position == "middle") View.VISIBLE else View.GONE
+        home.removeView(clock)
+        home.addView(clock, home.indexOfChild(if (position == "bottom") spaceMid else spaceTop) + 1)
+    }
+
+    private fun run(command: Command, app: App?, choice: String? = null) {
         when (command) {
             Command.PIN -> store.pin(app!!.key)
             Command.UNPIN -> store.unpin(app!!.key)
@@ -261,6 +285,10 @@ class MainActivity : Activity() {
             Command.RM -> uninstall(app!!)
             Command.SET -> startActivity(Intent(Settings.ACTION_SETTINGS))
             Command.DEFAULT -> startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+            Command.CLOCK -> {
+                store.clock = choice!!
+                applyClock()
+            }
             Command.Q -> {}
         }
         closeSearch()
