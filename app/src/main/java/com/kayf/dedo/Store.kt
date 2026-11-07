@@ -13,6 +13,10 @@ class Store(context: Context) {
         get() = prefs.getBoolean("railOnLeft", false)
         set(value) = prefs.edit().putBoolean("railOnLeft", value).apply()
 
+    var edge: Boolean
+        get() = prefs.getBoolean("edge", false)
+        set(value) = prefs.edit().putBoolean("edge", value).apply()
+
     fun pin(key: String) {
         if (key !in pins) pins += key
         savePins()

@@ -16,6 +16,21 @@ Press the alphabet rail, slide to a letter, slide off to an app, let go. That's 
 | Notifications | Swipe down |
 | Pin, hide, uninstall | Hold an app on home, in search, or in a letter you tapped open |
 
+### Edge strip (experimental)
+
+`:edge` puts a thin strip low on the rail's side of the screen, over every app. Flick in from it
+and an app opens without going home first. Where the flick starts and which way it goes picks the
+app:
+
+| | Straight in | In and up | In and down |
+|---|---|---|---|
+| **Upper half** | pin 3 | pin 4 | dedo |
+| **Lower half** | pin 1 | pin 2 | pin 5 |
+
+It needs the "display over other apps" permission and keeps a silent notification while it runs.
+Every stroke is logged, so `adb logcat -s dedo-edge` shows how often the system takes a stroke for
+its back gesture.
+
 Letters never move, so your thumb learns where they are. A letter with no apps hands over to the
 closest one that has some.
 
@@ -30,7 +45,8 @@ one at the bottom.
 | `:hide <app>` / `:unhide <app>` | Take off the rail and search, or bring back |
 | `:info <app>` | Android's page for the app |
 | `:rm <app>` | Uninstall |
-| `:left` / `:right` | Which side the rail is on |
+| `:left` / `:right` | Which side the rail and edge strip are on |
+| `:edge` | Edge strip on or off |
 | `:set` | Android settings |
 | `:default` | Choose the default launcher |
 | `:q` | Close |

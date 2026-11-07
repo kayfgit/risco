@@ -1,8 +1,10 @@
 package com.kayf.dedo
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
@@ -104,6 +106,30 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         apps.stop()
         super.onDestroy()
+    }
+
+    /** Also runs on return from the overlay permission screen, which is when the strip can start. */
+    override fun onResume() {
+        super.onResume()
+        syncEdge()
+    }
+
+    private fun syncEdge() {
+        val service = Intent(this, EdgeService::class.java)
+        if (store.edge && Settings.canDrawOverlays(this)) startForegroundService(service) else stopService(service)
+    }
+
+    private fun toggleEdge() {
+        store.edge = !store.edge
+        if (!store.edge) return syncEdge()
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
+        if (Settings.canDrawOverlays(this)) {
+            syncEdge()
+        } else {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
     }
 
     override fun onStop() {
@@ -276,7 +302,11 @@ class MainActivity : Activity() {
             Command.LEFT, Command.RIGHT -> {
                 store.railOnLeft = command == Command.LEFT
                 applySide()
+                // The strip reads its side when it starts.
+                stopService(Intent(this, EdgeService::class.java))
+                syncEdge()
             }
+            Command.EDGE -> toggleEdge()
             Command.SET -> startActivity(Intent(Settings.ACTION_SETTINGS))
             Command.DEFAULT -> startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
             Command.Q -> {}

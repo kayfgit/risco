@@ -12,6 +12,7 @@ enum class Command(val word: String, val arg: Arg, val help: String) {
     RM("rm", Arg.APP, "uninstall an app"),
     LEFT("left", Arg.NONE, "rail on the left"),
     RIGHT("right", Arg.NONE, "rail on the right"),
+    EDGE("edge", Arg.NONE, "edge strip on or off: flick to open pins 1-5"),
     SET("set", Arg.NONE, "open Android settings"),
     DEFAULT("default", Arg.NONE, "choose the default launcher"),
     Q("q", Arg.NONE, "close this"),

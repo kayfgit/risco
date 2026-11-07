@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Edge strip, experimental: `:edge` puts a thin strip on the thumb's edge over every app. Flicking
+  in from it opens pins 1–5 without going home first, and one flick opens dedo. Needs the
+  "display over other apps" permission and shows an ongoing notification.
+
 ## 0.1.0 - 2026-10-30
 
 First version.
