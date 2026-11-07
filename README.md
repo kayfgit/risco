@@ -9,14 +9,15 @@ Press the alphabet rail, slide to a letter, slide off to an app, let go. That's 
 
 | | |
 |---|---|
-| Open an app | Press the rail, slide to its letter, slide off towards the list, slide to the app, let go |
-| Change your mind | Let go past the left of the list, or slide back onto the rail for another letter |
+| Open an app | Press either rail, slide to its letter, slide off towards the list, slide to the app, let go |
+| Change your mind | Let go past the far end of the list, or slide back onto the rail for another letter |
 | Open a letter to tap instead | Let go while still on the rail |
 | Search | Swipe up, type, Enter. Matches accents, word starts and initials (`gm` finds Google Maps) |
 | Notifications | Swipe down |
 | Pin, hide, uninstall | Hold an app on home, in search, or in a letter you tapped open |
 
-Letters never move, so your thumb learns where they are. A letter with no apps hands over to the
+There's a rail on each edge, one for each thumb, and the list opens beside whichever one you
+pressed. Letters never move, so your thumb learns where they are. A letter with no apps hands over to the
 closest one that has some.
 
 ## Commands
@@ -30,7 +31,6 @@ one at the bottom.
 | `:hide <app>` / `:unhide <app>` | Take off the rail and search, or bring back |
 | `:info <app>` | Android's page for the app |
 | `:rm <app>` | Uninstall |
-| `:left` / `:right` | Which side the rail is on |
 | `:set` | Android settings |
 | `:default` | Choose the default launcher |
 | `:q` | Close |

@@ -23,12 +23,6 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     var onOpen: (App) -> Unit = {}
     var onHold: (App, Float, Float) -> Unit = { _, _, _ -> }
 
-    var onLeft = false
-        set(value) {
-            field = value
-            configure()
-        }
-
     private val density = resources.displayMetrics.density
     private val scaled = resources.configuration.fontScale * density
     private val railWidth = 64 * density
@@ -42,6 +36,8 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private var insetBottom = 0
     private var g = Geometry(0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 0f)
     private var drag = Drag(g) { byLetter[it] }
+    /** The rail the current drag, or the open panel, belongs to. */
+    private var side = Side.RIGHT
 
     private var pointer = -1
     private var fingerX = 0f
@@ -124,32 +120,38 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             hysteresis = 8 * density,
         )
         drag = Drag(g) { byLetter[it] }
-        row.textAlign = if (onLeft) Paint.Align.LEFT else Paint.Align.RIGHT
-        rowOn.textAlign = row.textAlign
 
         // The system only honours about 200dp of this per edge, which is why the letters also sit
-        // inboard of the edge: outside this rect they are still past the back gesture's narrow zone.
-        val left = if (onLeft) 0 else g.railLeft.toInt()
-        systemGestureExclusionRects = listOf(Rect(left, railTop.toInt(), left + railWidth.toInt(), bottom.toInt()))
+        // inboard of the edge: outside these rects they are still past the back gesture's narrow zone.
+        val top = railTop.toInt()
+        val wide = railWidth.toInt()
+        systemGestureExclusionRects = listOf(
+            Rect(0, top, wide, bottom.toInt()),
+            Rect(width - wide, top, width, bottom.toInt()),
+        )
         invalidate()
     }
 
-    private fun screenX(x: Float) = if (onLeft) width - x else x
+    private fun screenX(x: Float) = drag.local(x, side)
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                val x = screenX(event.x)
                 val y = event.y
+                val rail = drag.railAt(event.x, y)
                 when {
-                    drag.onRail(x, y) -> drag.pressRail(y)
-                    drag.onPanel(x, y) -> drag.pressPanel(x, y)
+                    rail != null -> {
+                        side = rail
+                        drag.pressRail(y)
+                    }
+                    drag.onPanel(screenX(event.x), y) -> drag.pressPanel(screenX(event.x), y)
                     drag.phase == Phase.PINNED -> {
                         dismiss()
                         return true
                     }
                     else -> return false
                 }
+                val x = screenX(event.x)
                 pointer = event.getPointerId(0)
                 fingerX = x
                 fingerY = y
@@ -198,16 +200,17 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     override fun onDraw(canvas: Canvas) {
         val open = drag.phase != Phase.IDLE
         if (open) canvas.drawColor(SCRIM)
-        drawRail(canvas)
+        drawRail(canvas, Side.LEFT)
+        drawRail(canvas, Side.RIGHT)
         if (open) drawPanel(canvas)
     }
 
-    private fun drawRail(canvas: Canvas) {
+    private fun drawRail(canvas: Canvas, rail: Side) {
         val slot = (g.railBottom - g.railTop) / LETTERS.length
-        val x = screenX(g.width - railCenter)
+        val x = drag.local(g.width - railCenter, rail)
         for (i in glyphs.indices) {
             val paint = when {
-                i == drag.letter -> letterOn
+                rail == side && i == drag.letter -> letterOn
                 byLetter[i].isEmpty() -> letterEmpty
                 else -> letter
             }
@@ -220,9 +223,12 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         val rows = drag.rows
         val near = g.railLeft - rowInset
         val far = g.panelLeft
+        val onLeft = side == Side.LEFT
         val textX = screenX(near)
         val barLeft = if (onLeft) g.width - g.railLeft else far
         val barRight = if (onLeft) g.width - far else g.railLeft
+        row.textAlign = if (onLeft) Paint.Align.LEFT else Paint.Align.RIGHT
+        rowOn.textAlign = row.textAlign
         canvas.save()
         canvas.clipRect(0f, g.panelTop, g.width, g.panelBottom)
         for (i in rows.indices) {

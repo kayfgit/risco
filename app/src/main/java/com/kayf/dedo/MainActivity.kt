@@ -71,7 +71,6 @@ class MainActivity : Activity() {
         root.onSwipeDown = ::expandShade
         rail.onOpen = ::open
         rail.onHold = ::showMenu
-        applySide()
 
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
@@ -148,19 +147,6 @@ class MainActivity : Activity() {
             pins.addView(view)
         }
         hint.visibility = if (pins.childCount == 0) View.VISIBLE else View.GONE
-    }
-
-    private fun applySide() {
-        val onLeft = store.railOnLeft
-        rail.onLeft = onLeft
-        val side = if (onLeft) Gravity.START else Gravity.END
-        home.gravity = side
-        pins.gravity = side
-        hint.gravity = side
-        input.gravity = Gravity.CENTER_VERTICAL or side
-        val inner = dp(16)
-        val beside = dp(76)
-        home.setPadding(if (onLeft) beside else inner, home.paddingTop, if (onLeft) inner else beside, home.paddingBottom)
     }
 
     private fun open(app: App) {
@@ -273,10 +259,6 @@ class MainActivity : Activity() {
             Command.UNHIDE -> store.unhide(app!!.key)
             Command.INFO -> apps.details(app!!)
             Command.RM -> uninstall(app!!)
-            Command.LEFT, Command.RIGHT -> {
-                store.railOnLeft = command == Command.LEFT
-                applySide()
-            }
             Command.SET -> startActivity(Intent(Settings.ACTION_SETTINGS))
             Command.DEFAULT -> startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
             Command.Q -> {}
@@ -319,7 +301,8 @@ class MainActivity : Activity() {
         isSingleLine = true
         ellipsize = TextUtils.TruncateAt.END
         minHeight = dp(52)
-        gravity = Gravity.CENTER_VERTICAL or if (store.railOnLeft) Gravity.START else Gravity.END
+        // Centred, so neither thumb has further to reach.
+        gravity = Gravity.CENTER
         setPadding(dp(14), 0, dp(14), 0)
         if (on) {
             setBackgroundColor(Color.WHITE)

@@ -54,6 +54,6 @@ class InputTest {
 
     @Test
     fun `a command without an argument is complete at once`() {
-        assertEquals(Input.Full(Command.LEFT, ""), parseInput(":left"))
+        assertEquals(Input.Full(Command.SET, ""), parseInput(":set"))
     }
 }

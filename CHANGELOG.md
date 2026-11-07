@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- A rail on both edges at once, so either thumb can open apps. The list opens beside the rail you
+  pressed. Home and search are centred.
+- Removed `:left` and `:right`, which only moved the single rail.
+
 ## 0.1.0 - 2026-10-30
 
 First version.

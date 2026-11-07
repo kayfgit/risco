@@ -9,10 +9,6 @@ class Store(context: Context) {
         prefs.getString("pins", "")!!.split('\n').filter { it.isNotEmpty() }.toMutableList()
     val hidden: MutableSet<String> = prefs.getStringSet("hidden", emptySet())!!.toMutableSet()
 
-    var railOnLeft: Boolean
-        get() = prefs.getBoolean("railOnLeft", false)
-        set(value) = prefs.edit().putBoolean("railOnLeft", value).apply()
-
     fun pin(key: String) {
         if (key !in pins) pins += key
         savePins()

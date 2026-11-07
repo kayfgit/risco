@@ -10,8 +10,6 @@ enum class Command(val word: String, val arg: Arg, val help: String) {
     UNHIDE("unhide", Arg.HIDDEN, "bring a hidden app back"),
     INFO("info", Arg.APP, "open an app's system page"),
     RM("rm", Arg.APP, "uninstall an app"),
-    LEFT("left", Arg.NONE, "rail on the left"),
-    RIGHT("right", Arg.NONE, "rail on the right"),
     SET("set", Arg.NONE, "open Android settings"),
     DEFAULT("default", Arg.NONE, "choose the default launcher"),
     Q("q", Arg.NONE, "close this"),

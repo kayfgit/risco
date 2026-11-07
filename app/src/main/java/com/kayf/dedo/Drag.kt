@@ -7,10 +7,7 @@ import kotlin.math.min
 /** The rail's letters, top to bottom. They never move, so the thumb can learn where they are. */
 const val LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
 
-/**
- * Where things are, in pixels, always as if the rail were on the right.
- * RailView mirrors x for left-handed use, so nothing in here knows about it.
- */
+/** Where things are, in pixels, always as if the rail were on the right. */
 data class Geometry(
     val width: Float,
     val railLeft: Float,
@@ -24,6 +21,9 @@ data class Geometry(
 )
 
 enum class Phase { IDLE, RAIL, LIST, PINNED }
+
+/** There's a rail on each edge, one per thumb. Both share one [Drag], with x mirrored for the left. */
+enum class Side { LEFT, RIGHT }
 
 sealed class Release<out T> {
     data class Open<T>(val app: T) : Release<T>()
@@ -60,6 +60,16 @@ class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List
     val panelBottom get() = min(g.panelBottom, panelTop + contentHeight)
 
     fun onRail(x: Float, y: Float) = x >= g.railLeft && y >= g.railTop && y <= g.railBottom
+
+    /** Which rail a touch at screen x lands on, if either. */
+    fun railAt(screenX: Float, y: Float): Side? = when {
+        onRail(screenX, y) -> Side.RIGHT
+        onRail(g.width - screenX, y) -> Side.LEFT
+        else -> null
+    }
+
+    /** Screen x as this class sees it, which is always as if the rail were on the right. */
+    fun local(screenX: Float, side: Side) = if (side == Side.LEFT) g.width - screenX else screenX
 
     fun onPanel(x: Float, y: Float) =
         phase == Phase.PINNED && rows.isNotEmpty() && x >= g.panelLeft && x < g.railLeft && y >= panelTop && y < panelBottom
