@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hint">drag along the letters,\nslide off to an app, let go.\n\nswipe up to search,\n: for commands.\n\n:default makes this your home.</string>
+    <string name="search_hint">search  : commands</string>
+</resources>
