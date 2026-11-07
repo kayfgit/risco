@@ -7,10 +7,7 @@ import kotlin.math.min
 /** The rail's letters, top to bottom. They never move, so the thumb can learn where they are. */
 const val LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
 
-/**
- * Where things are, in pixels, always as if the rail were on the right.
- * RailView mirrors x for left-handed use, so nothing in here knows about it.
- */
+/** Where things are, in pixels, always as if the rail were on the right. */
 data class Geometry(
     val width: Float,
     val railLeft: Float,
@@ -23,11 +20,13 @@ data class Geometry(
     val hysteresis: Float,
 )
 
-enum class Phase { IDLE, RAIL, LIST, PINNED }
+enum class Phase { IDLE, RAIL, LIST }
+
+/** There's a rail on each edge, one per thumb. Both share one [Drag], with x mirrored for the left. */
+enum class Side { LEFT, RIGHT }
 
 sealed class Release<out T> {
     data class Open<T>(val app: T) : Release<T>()
-    data object Pin : Release<Nothing>()
     data object Cancel : Release<Nothing>()
 }
 
@@ -35,8 +34,8 @@ sealed class Release<out T> {
  * The whole drag, with no Android in it so it can be tested on the PC.
  *
  * One stroke: press the rail, slide along it to a letter, slide off it towards the apps, slide to
- * an app, let go. Letting go on the rail keeps that letter's apps open to tap instead. Sliding back
- * onto the rail reopens the letters, and letting go past the left of the panel cancels.
+ * an app, let go. Sliding back onto the rail reopens the letters, and letting go on the rail or past
+ * the far end of the panel cancels.
  */
 class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List<T>) {
     var phase = Phase.IDLE
@@ -61,18 +60,20 @@ class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List
 
     fun onRail(x: Float, y: Float) = x >= g.railLeft && y >= g.railTop && y <= g.railBottom
 
-    fun onPanel(x: Float, y: Float) =
-        phase == Phase.PINNED && rows.isNotEmpty() && x >= g.panelLeft && x < g.railLeft && y >= panelTop && y < panelBottom
+    /** Which rail a touch at screen x lands on, if either. */
+    fun railAt(screenX: Float, y: Float): Side? = when {
+        onRail(screenX, y) -> Side.RIGHT
+        onRail(g.width - screenX, y) -> Side.LEFT
+        else -> null
+    }
+
+    /** Screen x as this class sees it, which is always as if the rail were on the right. */
+    fun local(screenX: Float, side: Side) = if (side == Side.LEFT) g.width - screenX else screenX
 
     fun pressRail(y: Float) {
         phase = Phase.RAIL
         selected = -1
         slideRail(y)
-    }
-
-    fun pressPanel(x: Float, y: Float) {
-        phase = Phase.LIST
-        move(x, y)
     }
 
     fun move(x: Float, y: Float) {
@@ -94,7 +95,7 @@ class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List
                     selectAt(x, y)
                 }
             }
-            else -> {}
+            Phase.IDLE -> {}
         }
     }
 
@@ -115,12 +116,8 @@ class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List
     }
 
     fun release(): Release<T> {
-        val result = when (phase) {
-            Phase.RAIL -> if (rows.isNotEmpty()) Release.Pin else Release.Cancel
-            Phase.LIST -> if (selected >= 0) Release.Open(rows[selected]) else Release.Cancel
-            else -> Release.Cancel
-        }
-        if (result == Release.Pin) phase = Phase.PINNED else reset()
+        val result = if (phase == Phase.LIST && selected >= 0) Release.Open(rows[selected]) else Release.Cancel
+        reset()
         return result
     }
 

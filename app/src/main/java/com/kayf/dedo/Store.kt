@@ -9,9 +9,20 @@ class Store(context: Context) {
         prefs.getString("pins", "")!!.split('\n').filter { it.isNotEmpty() }.toMutableList()
     val hidden: MutableSet<String> = prefs.getStringSet("hidden", emptySet())!!.toMutableSet()
 
-    var railOnLeft: Boolean
-        get() = prefs.getBoolean("railOnLeft", false)
-        set(value) = prefs.edit().putBoolean("railOnLeft", value).apply()
+    /** The rail last used, which is the one drawn. */
+    var railSide: Side
+        get() = if (prefs.getBoolean("railLeft", false)) Side.LEFT else Side.RIGHT
+        set(value) = prefs.edit().putBoolean("railLeft", value == Side.LEFT).apply()
+
+    /** Set once the first app opens, which retires the welcome text. */
+    var welcomed: Boolean
+        get() = prefs.getBoolean("welcomed", false)
+        set(value) = prefs.edit().putBoolean("welcomed", value).apply()
+
+    /** One of [Command.CLOCK]'s choices. */
+    var clock: String
+        get() = prefs.getString("clock", "off")!!
+        set(value) = prefs.edit().putString("clock", value).apply()
 
     fun pin(key: String) {
         if (key !in pins) pins += key

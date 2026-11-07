@@ -2,6 +2,7 @@ package com.kayf.dedo
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -56,16 +57,13 @@ class DragTest {
     }
 
     @Test
-    fun `letting go on the rail keeps the apps open to tap`() {
+    fun `letting go on the rail cancels`() {
         val d = drag("Maps", "Messages")
         d.pressRail(yOf('M'))
-        assertEquals(Release.Pin, d.release())
-        assertEquals(Phase.PINNED, d.phase)
-
-        val y = d.panelTop + 25f
-        assertTrue(d.onPanel(listX, y))
-        d.pressPanel(listX, y)
-        assertEquals(Release.Open("Maps"), d.release())
+        assertEquals(Release.Cancel, d.release())
+        assertEquals(Phase.IDLE, d.phase)
+        assertEquals(-1, d.letter)
+        assertTrue(d.rows.isEmpty())
     }
 
     @Test
@@ -142,6 +140,33 @@ class DragTest {
         d.pressRail(yOf('M'))
         d.move(listX, g.panelBottom - 1f)
         assertFalse(d.tick(listX, g.panelBottom - 1f))
+    }
+
+    @Test
+    fun `either edge is a rail`() {
+        val d = drag("Maps")
+        assertEquals(Side.RIGHT, d.railAt(railX, yOf('M')))
+        assertEquals(Side.LEFT, d.railAt(g.width - railX, yOf('M')))
+        assertNull(d.railAt(g.width / 2, yOf('M')))
+        assertNull(d.railAt(g.width - railX, g.railTop - 1f))
+    }
+
+    @Test
+    fun `a stroke from the left rail mirrors one from the right`() {
+        val d = drag("Gmail", "Google")
+        val side = d.railAt(g.width - railX, yOf('G'))!!
+        d.pressRail(yOf('G'))
+        // The left thumb moves right, away from its edge, towards the list.
+        d.move(d.local(g.width - listX, side), d.panelTop + 75f)
+        assertEquals(Phase.LIST, d.phase)
+        assertEquals(Release.Open("Google"), d.release())
+    }
+
+    @Test
+    fun `the right rail needs no mirroring`() {
+        val d = drag("Maps")
+        assertEquals(123f, d.local(123f, Side.RIGHT))
+        assertEquals(g.width - 123f, d.local(123f, Side.LEFT))
     }
 
     @Test

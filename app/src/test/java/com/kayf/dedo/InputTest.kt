@@ -53,7 +53,16 @@ class InputTest {
     }
 
     @Test
+    fun `clock offers its positions as you type`() {
+        assertEquals(Input.Full(Command.CLOCK, "bo"), parseInput(":clock bo"))
+        assertEquals(listOf("top", "middle", "bottom", "off"), Command.CLOCK.choicesFor(""))
+        assertEquals(listOf("bottom"), Command.CLOCK.choicesFor("bo"))
+        assertEquals(listOf("off"), Command.CLOCK.choicesFor(" OF"))
+        assertEquals(emptyList<String>(), Command.CLOCK.choicesFor("x"))
+    }
+
+    @Test
     fun `a command without an argument is complete at once`() {
-        assertEquals(Input.Full(Command.LEFT, ""), parseInput(":left"))
+        assertEquals(Input.Full(Command.SET, ""), parseInput(":set"))
     }
 }

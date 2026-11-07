@@ -18,21 +18,24 @@ import kotlin.math.max
  * The alphabet rail and the panel of apps beside it, drawn straight to the canvas so a drag only
  * ever repaints this one view. All the decisions are in [Drag]; this turns touches into calls on
  * it and draws what it says.
+ *
+ * Both edges take touches, one per thumb, but only the rail last used is drawn.
  */
 class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     var onOpen: (App) -> Unit = {}
-    var onHold: (App, Float, Float) -> Unit = { _, _, _ -> }
+    var onSide: (Side) -> Unit = {}
 
-    var onLeft = false
+    /** The rail that is drawn, and that the current drag belongs to. */
+    var side = Side.RIGHT
         set(value) {
             field = value
-            configure()
+            invalidate()
         }
 
     private val density = resources.displayMetrics.density
     private val scaled = resources.configuration.fontScale * density
     private val railWidth = 64 * density
-    private val railCenter = 38 * density
+    private val railCenter = 14 * density
     private val rowHeight = 52 * density
     private val rowInset = 14 * density
     private val letterSlot = 22 * density
@@ -48,7 +51,6 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private var fingerY = 0f
     private var lastLetter = -1
     private var lastSelected = -1
-    private var holdable = false
 
     private val glyphs = LETTERS.toCharArray()
     private val letter = paint(13f, 0xD0FFFFFF.toInt(), Paint.Align.CENTER).apply { setShadowLayer(3 * density, 0f, 0f, Color.BLACK) }
@@ -57,17 +59,6 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private val row = paint(18f, Color.WHITE, Paint.Align.RIGHT)
     private val rowOn = paint(18f, Color.BLACK, Paint.Align.RIGHT).apply { isFakeBoldText = true }
     private val cursor = Paint().apply { color = Color.WHITE }
-
-    private val hold = Runnable {
-        val app = drag.rows.getOrNull(drag.selected) ?: return@Runnable
-        val x = screenX(g.railLeft)
-        val y = fingerY
-        drag.reset()
-        pointer = -1
-        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        invalidate()
-        onHold(app, x, y)
-    }
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -97,13 +88,10 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         configure()
     }
 
-    fun dismiss(): Boolean {
-        val open = drag.phase != Phase.IDLE
-        removeCallbacks(hold)
+    fun dismiss() {
         pointer = -1
         drag.reset()
         invalidate()
-        return open
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) = configure()
@@ -124,39 +112,35 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             hysteresis = 8 * density,
         )
         drag = Drag(g) { byLetter[it] }
-        row.textAlign = if (onLeft) Paint.Align.LEFT else Paint.Align.RIGHT
-        rowOn.textAlign = row.textAlign
 
-        // The system only honours about 200dp of this per edge, which is why the letters also sit
-        // inboard of the edge: outside this rect they are still past the back gesture's narrow zone.
-        val left = if (onLeft) 0 else g.railLeft.toInt()
-        systemGestureExclusionRects = listOf(Rect(left, railTop.toInt(), left + railWidth.toInt(), bottom.toInt()))
+        // The system only honours about 200dp of this per edge, from the bottom up. Above that, a
+        // stroke along the rail still works, since the back gesture only takes strokes going inward.
+        val top = railTop.toInt()
+        val wide = railWidth.toInt()
+        systemGestureExclusionRects = listOf(
+            Rect(0, top, wide, bottom.toInt()),
+            Rect(width - wide, top, width, bottom.toInt()),
+        )
         invalidate()
     }
 
-    private fun screenX(x: Float) = if (onLeft) width - x else x
+    private fun screenX(x: Float) = drag.local(x, side)
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                val x = screenX(event.x)
                 val y = event.y
-                when {
-                    drag.onRail(x, y) -> drag.pressRail(y)
-                    drag.onPanel(x, y) -> drag.pressPanel(x, y)
-                    drag.phase == Phase.PINNED -> {
-                        dismiss()
-                        return true
-                    }
-                    else -> return false
+                val rail = drag.railAt(event.x, y) ?: return false
+                if (rail != side) {
+                    side = rail
+                    onSide(rail)
                 }
+                drag.pressRail(y)
                 pointer = event.getPointerId(0)
-                fingerX = x
+                fingerX = screenX(event.x)
                 fingerY = y
                 lastLetter = -1
                 lastSelected = -1
-                // Pausing mid-drag means deciding, not asking for the menu.
-                holdable = drag.phase == Phase.LIST
                 parent.requestDisallowInterceptTouchEvent(true)
                 removeCallbacks(ticker)
                 postOnAnimation(ticker)
@@ -171,7 +155,6 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
                 changed()
             }
             MotionEvent.ACTION_UP -> {
-                removeCallbacks(hold)
                 if (drag.active) {
                     val result = drag.release()
                     pointer = -1
@@ -189,8 +172,6 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             lastLetter = drag.letter
             lastSelected = drag.selected
             performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-            removeCallbacks(hold)
-            if (holdable && drag.selected >= 0) postDelayed(hold, HOLD_MS)
         }
         invalidate()
     }
@@ -220,9 +201,12 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         val rows = drag.rows
         val near = g.railLeft - rowInset
         val far = g.panelLeft
+        val onLeft = side == Side.LEFT
         val textX = screenX(near)
         val barLeft = if (onLeft) g.width - g.railLeft else far
         val barRight = if (onLeft) g.width - far else g.railLeft
+        row.textAlign = if (onLeft) Paint.Align.LEFT else Paint.Align.RIGHT
+        rowOn.textAlign = row.textAlign
         canvas.save()
         canvas.clipRect(0f, g.panelTop, g.width, g.panelBottom)
         for (i in rows.indices) {
@@ -240,6 +224,5 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
     private companion object {
         const val SCRIM = 0xD0000000.toInt()
-        const val HOLD_MS = 600L
     }
 }

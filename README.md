@@ -9,15 +9,15 @@ Press the alphabet rail, slide to a letter, slide off to an app, let go. That's 
 
 | | |
 |---|---|
-| Open an app | Press the rail, slide to its letter, slide off towards the list, slide to the app, let go |
-| Change your mind | Let go past the left of the list, or slide back onto the rail for another letter |
-| Open a letter to tap instead | Let go while still on the rail |
+| Open an app | Press either rail, slide to its letter, slide off towards the list, slide to the app, let go |
+| Change your mind | Let go on the rail or past the far end of the list, or slide back onto the rail for another letter |
 | Search | Swipe up, type, Enter. Matches accents, word starts and initials (`gm` finds Google Maps) |
 | Notifications | Swipe down |
-| Pin, hide, uninstall | Hold an app on home, in search, or in a letter you tapped open |
+| Pin, hide, uninstall | Hold an app on home or in search |
 
-Letters never move, so your thumb learns where they are. A letter with no apps hands over to the
-closest one that has some.
+Both edges are rails, one for each thumb, but only the one you used last is drawn. Press the other
+edge and it takes over. The list opens beside whichever rail you pressed. Letters never move, so
+your thumb learns where they are. A letter with no apps hands over to the closest one that has some.
 
 ## Commands
 
@@ -30,7 +30,7 @@ one at the bottom.
 | `:hide <app>` / `:unhide <app>` | Take off the rail and search, or bring back |
 | `:info <app>` | Android's page for the app |
 | `:rm <app>` | Uninstall |
-| `:left` / `:right` | Which side the rail is on |
+| `:clock <top\|middle\|bottom\|off>` | Where the clock and date go. Off by default |
 | `:set` | Android settings |
 | `:default` | Choose the default launcher |
 | `:q` | Close |
@@ -59,6 +59,6 @@ Trying dedo doesn't replace your launcher. It installs as a normal app until you
 
 No AndroidX, no Compose, no runtime dependencies beyond Kotlin itself.
 
-The rail's letters sit 38dp in from the edge on purpose. With gesture navigation, a swipe from the
-edge means *back*, and Android lets an app opt out for only about 200dp per edge, far less than a
-rail. So the opt-out covers what it can, and the rest stays clear of the edge.
+With gesture navigation, a swipe in from the edge means *back*, and Android lets an app opt out for
+only about 200dp per edge, less than a rail. The opt-out covers the bottom of each rail. Above it,
+sliding along the rail still works, because the back gesture only takes strokes moving inward.
