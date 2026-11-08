@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
@@ -12,15 +13,20 @@
         </intent>
     </queries>
 
+    <!-- No backups. On Android 11 allowBackup="false" covers everything; from 12 the rules file
+         also covers device transfer. -->
     <application
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="dedo"
         android:supportsRtl="false"
         android:theme="@style/Theme.Dedo">
 
+        <!-- Portrait on purpose: the rail is laid out for a thumb on a phone held upright. -->
         <activity
             android:name=".MainActivity"
+            tools:ignore="LockedOrientationActivity,DiscouragedApi"
             android:clearTaskOnLaunch="true"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
             android:exported="true"

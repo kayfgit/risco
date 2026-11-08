@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- The resource compiler only accepts an adaptive icon in a -v26 folder, minSdk or not. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+    <!-- Asks for fullBackupContent for Android 11, where allowBackup="false" already turns off
+         every kind of backup. tools:ignore in the manifest doesn't reach this check. -->
+    <issue id="DataExtractionRules">
+        <ignore path="src/main/AndroidManifest.xml" />
+    </issue>
+</lint>

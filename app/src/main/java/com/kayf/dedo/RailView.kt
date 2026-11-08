@@ -1,5 +1,6 @@
 package com.kayf.dedo
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -130,6 +131,8 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
     private fun screenX(x: Float) = drag.local(x, side)
 
+    // A stroke opens an app on release, not on a click, so there's no performClick to call.
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {

@@ -216,6 +216,8 @@ class MainActivity : Activity() {
         scroller.post { scroller.scrollTo(0, results.height) }
     }
 
+    // Commands are typed, not translated, so building ":pin " in code is fine.
+    @SuppressLint("SetTextI18n")
     private fun hitsFor(text: String): List<Hit> = when (val parsed = parseInput(text)) {
         is Input.Search -> ranked(visible, parsed.query).map { app ->
             Hit(app.label, app) {
