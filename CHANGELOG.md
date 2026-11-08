@@ -12,6 +12,10 @@
 - The welcome text shows until the first app is opened, then goes away.
 - The clock and date are off by default. `:clock` puts them at the top, middle or bottom, or turns
   them off.
+- Nothing is carried over when moving to a new phone, matching backups, which were already off.
+- Autofill no longer offers itself in search.
+- For development: ktlint formatting (`spotlessApply`), Android Lint failing on any warning, and
+  GitHub Actions running both with the tests and a release build, keeping the APK.
 
 ## 0.1.0 - 2026-10-30
 

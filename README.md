@@ -41,8 +41,13 @@ You need JDK 17 and the Android SDK (platform 34, build-tools 34). Android Studi
 
 ```powershell
 .\gradlew.bat test              # the drag, search and commands, no phone needed
+.\gradlew.bat spotlessApply     # format (ktlint)
+.\gradlew.bat lint              # Android Lint; any warning fails
 .\install-local.ps1             # build, install on the connected phone, open
 ```
+
+CI runs the format check, lint, tests and a release build on every pull request and push to
+`main`, and keeps the APK for two weeks under the run's artifacts.
 
 Trying dedo doesn't replace your launcher. It installs as a normal app until you run `:default`.
 
