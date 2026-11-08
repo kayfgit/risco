@@ -14,6 +14,8 @@
   them off.
 - Nothing is carried over when moving to a new phone, matching backups, which were already off.
 - Autofill no longer offers itself in search.
+- Search's results no longer jump up when the keyboard lands. They open where the keyboard will be,
+  using its height from last time.
 - For development: ktlint formatting (`spotlessApply`), Android Lint failing on any warning, and
   GitHub Actions running both with the tests and a release build, keeping the APK.
 

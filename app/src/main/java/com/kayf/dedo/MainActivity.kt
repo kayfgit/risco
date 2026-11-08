@@ -16,6 +16,7 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
+import android.view.WindowInsetsAnimation
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -47,6 +48,8 @@ class MainActivity : Activity() {
     private var hits: List<Hit> = emptyList()
     private var searching = false
     private var keyboardWasUp = false
+    private var barsTop = 0
+    private var barsBottom = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,16 +86,26 @@ class MainActivity : Activity() {
         root.setOnApplyWindowInsetsListener { _, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
             val withKeyboard = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime())
+            val keyboardUp = insets.isVisible(WindowInsets.Type.ime())
+            if (keyboardUp) store.keyboardHeight = withKeyboard.bottom
+            barsTop = bars.top
+            barsBottom = bars.bottom
             home.setPadding(home.paddingLeft, bars.top, home.paddingRight, bars.bottom)
-            search.setPadding(search.paddingLeft, bars.top, search.paddingRight, withKeyboard.bottom)
+            placeSearch(searchBottom(keyboardUp, withKeyboard.bottom, bars.bottom, store.keyboardHeight))
             rail.setInsets(bars.top, bars.bottom)
 
             // Back hides the keyboard before the app ever hears about it, so that is the signal.
-            val keyboardUp = insets.isVisible(WindowInsets.Type.ime())
             if (keyboardWasUp && !keyboardUp) closeSearch()
             keyboardWasUp = keyboardUp
             WindowInsets.CONSUMED
         }
+        // With a callback set, the listener above only hears where the keyboard ends up, never the
+        // frames in between, so the results are placed once and stay put while it slides in.
+        root.setWindowInsetsAnimationCallback(
+            object : WindowInsetsAnimation.Callback(DISPATCH_MODE_STOP) {
+                override fun onProgress(insets: WindowInsets, running: List<WindowInsetsAnimation>) = insets
+            },
+        )
 
         input.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -178,12 +191,19 @@ class MainActivity : Activity() {
         root.swipes = false
         home.visibility = View.INVISIBLE
         rail.visibility = View.GONE
+        placeSearch(searchBottom(false, barsBottom, barsBottom, store.keyboardHeight))
         search.visibility = View.VISIBLE
         input.setText("")
         input.requestFocus()
         // Unlike InputMethodManager, this still works when the field only just became visible.
         window.insetsController?.show(WindowInsets.Type.ime())
         renderHits()
+    }
+
+    private fun placeSearch(bottom: Int) {
+        if (search.paddingBottom == bottom && search.paddingTop == barsTop) return
+        search.setPadding(search.paddingLeft, barsTop, search.paddingRight, bottom)
+        if (searching) scroller.post { scroller.scrollTo(0, results.height) }
     }
 
     private fun closeSearch() {
