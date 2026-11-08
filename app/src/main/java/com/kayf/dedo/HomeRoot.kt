@@ -1,5 +1,6 @@
 package com.kayf.dedo
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -20,6 +21,8 @@ class HomeRoot(context: Context, attrs: AttributeSet?) : FrameLayout(context, at
 
     override fun onInterceptTouchEvent(event: MotionEvent) = track(event)
 
+    // Swipes, never clicks, so there's no performClick to call.
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         track(event)
         return true

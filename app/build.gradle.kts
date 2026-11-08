@@ -36,8 +36,17 @@ android {
     buildFeatures {
         buildConfig = false
     }
+    // gradlew lint. Every warning fails the build, so nothing piles up unread.
+    lint {
+        warningsAsErrors = true
+        abortOnError = true
+        // Still reported, but doesn't fail: raising targetSdk changes how the app behaves
+        // (35 forces edge-to-edge), so it's done on purpose and tested on a phone, not to quiet lint.
+        informational += "OldTargetApi"
+    }
     packaging {
-        resources.excludes += setOf("META-INF/*.version", "META-INF/**/*.kotlin_builtins", "kotlin/**", "DebugProbesKt.bin")
+        resources.excludes +=
+            setOf("META-INF/*.version", "META-INF/**/*.kotlin_builtins", "kotlin/**", "DebugProbesKt.bin")
     }
 }
 

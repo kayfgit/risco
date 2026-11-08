@@ -216,6 +216,8 @@ class MainActivity : Activity() {
         scroller.post { scroller.scrollTo(0, results.height) }
     }
 
+    // Commands are typed, not translated, so building ":pin " in code is fine.
+    @SuppressLint("SetTextI18n")
     private fun hitsFor(text: String): List<Hit> = when (val parsed = parseInput(text)) {
         is Input.Search -> ranked(visible, parsed.query).map { app ->
             Hit(app.label, app) {
@@ -234,7 +236,11 @@ class MainActivity : Activity() {
             }
         }
         is Input.Full -> when (parsed.command.arg) {
-            Arg.NONE -> listOf(Hit(":${parsed.command.word}  ${parsed.command.help}", null) { run(parsed.command, null) })
+            Arg.NONE -> listOf(
+                Hit(":${parsed.command.word}  ${parsed.command.help}", null) {
+                    run(parsed.command, null)
+                },
+            )
             Arg.CHOICE -> parsed.command.choicesFor(parsed.argument).map { choice ->
                 Hit(":${parsed.command.word} $choice", null) { run(parsed.command, null, choice) }
             }
@@ -260,7 +266,7 @@ class MainActivity : Activity() {
                     { -store.launches(it.first.key) },
                     { -it.second },
                     { it.first.folded },
-                )
+                ),
             )
             .take(MAX_HITS)
             .map { it.first }
@@ -305,10 +311,22 @@ class MainActivity : Activity() {
         val menu = PopupMenu(this, anchor)
         val pinned = app.key in store.pins
         val pinCommand = if (pinned) Command.UNPIN else Command.PIN
-        menu.menu.add(pinCommand.word).setOnMenuItemClickListener { run(pinCommand, app); true }
-        menu.menu.add(Command.HIDE.word).setOnMenuItemClickListener { run(Command.HIDE, app); true }
-        menu.menu.add(Command.INFO.word).setOnMenuItemClickListener { run(Command.INFO, app); true }
-        menu.menu.add(Command.RM.word).setOnMenuItemClickListener { run(Command.RM, app); true }
+        menu.menu.add(pinCommand.word).setOnMenuItemClickListener {
+            run(pinCommand, app)
+            true
+        }
+        menu.menu.add(Command.HIDE.word).setOnMenuItemClickListener {
+            run(Command.HIDE, app)
+            true
+        }
+        menu.menu.add(Command.INFO.word).setOnMenuItemClickListener {
+            run(Command.INFO, app)
+            true
+        }
+        menu.menu.add(Command.RM.word).setOnMenuItemClickListener {
+            run(Command.RM, app)
+            true
+        }
         menu.show()
     }
 
