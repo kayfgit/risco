@@ -37,7 +37,8 @@ android {
         buildConfig = false
     }
     packaging {
-        resources.excludes += setOf("META-INF/*.version", "META-INF/**/*.kotlin_builtins", "kotlin/**", "DebugProbesKt.bin")
+        resources.excludes +=
+            setOf("META-INF/*.version", "META-INF/**/*.kotlin_builtins", "kotlin/**", "DebugProbesKt.bin")
     }
 }
 

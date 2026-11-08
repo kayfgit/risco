@@ -53,8 +53,12 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private var lastSelected = -1
 
     private val glyphs = LETTERS.toCharArray()
-    private val letter = paint(13f, 0xD0FFFFFF.toInt(), Paint.Align.CENTER).apply { setShadowLayer(3 * density, 0f, 0f, Color.BLACK) }
-    private val letterEmpty = paint(13f, 0x55FFFFFF, Paint.Align.CENTER).apply { setShadowLayer(3 * density, 0f, 0f, Color.BLACK) }
+    private val letter = paint(13f, 0xD0FFFFFF.toInt(), Paint.Align.CENTER).apply {
+        setShadowLayer(3 * density, 0f, 0f, Color.BLACK)
+    }
+    private val letterEmpty = paint(13f, 0x55FFFFFF, Paint.Align.CENTER).apply {
+        setShadowLayer(3 * density, 0f, 0f, Color.BLACK)
+    }
     private val letterOn = paint(20f, Color.WHITE, Paint.Align.CENTER).apply { isFakeBoldText = true }
     private val row = paint(18f, Color.WHITE, Paint.Align.RIGHT)
     private val rowOn = paint(18f, Color.BLACK, Paint.Align.RIGHT).apply { isFakeBoldText = true }
