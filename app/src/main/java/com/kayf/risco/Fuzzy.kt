@@ -1,4 +1,4 @@
-package com.kayf.dedo
+package com.kayf.risco
 
 import java.text.Normalizer
 import kotlin.math.max

@@ -1,4 +1,4 @@
-package com.kayf.dedo
+package com.kayf.risco
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

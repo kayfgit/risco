@@ -2,4 +2,4 @@
 $ErrorActionPreference = 'Stop'
 & "$PSScriptRoot\gradlew.bat" -p $PSScriptRoot installRelease
 if ($LASTEXITCODE) { exit $LASTEXITCODE }
-adb shell am start -n com.kayf.dedo/.MainActivity
+adb shell am start -n com.kayf.risco/.MainActivity

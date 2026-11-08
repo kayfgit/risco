@@ -101,8 +101,8 @@ keyboard, so no keyboard animation.
   disoriented people. Any suggestion from usage data is reported, never applied.
 - **Bind tasks, not apps.** A slot can hold an app, an Android app shortcut, a deep link or a
   `:` command. One stroke to a specific chat saves more than any launcher trick. Reading app
-  shortcuts requires dedo to be the default launcher.
-- **Config is text.** Bindings live in a plain `dedorc` you can edit, diff and back up, like a vimrc:
+  shortcuts requires risco to be the default launcher.
+- **Config is text.** Bindings live in a plain `riscorc` you can edit, diff and back up, like a vimrc:
 
   ```
   map Z3.NW  com.whatsapp
@@ -116,7 +116,7 @@ keyboard, so no keyboard animation.
 Seconds per launch on the measured usage with 16 marks, including 0.30 s of deciding that every
 design pays. From [model.py](model.py).
 
-| Scenario | Stock | Niagara / dedo today | Marks at home | Marks from anywhere |
+| Scenario | Stock | Niagara / risco today | Marks at home | Marks from anywhere |
 |---|---|---|---|---|
 | Base case | 1.45 | 1.60 | 1.38 | **0.80** |
 | Marks better than the stylus data | 1.45 | 1.60 | 1.18 | **0.74** |
@@ -150,7 +150,7 @@ counted here at all, and they can save more per use than the launch itself.
    fails, switch to the assistant fallback before designing further around it.
 2. **`:bench`.** Prompts a target and logs milliseconds and errors per zone and direction, which
    replaces these estimates with real numbers.
-3. **Marks and `dedorc`**, reached through the leader.
+3. **Marks and `riscorc`**, reached through the leader.
 4. **Task bindings.** Uncounted by the model, and potentially the largest saving per use.
 5. **Pad.** Last, since it only serves the 9% of launches past the top 16, and search already
    covers those.

@@ -1,4 +1,4 @@
-package com.kayf.dedo
+package com.kayf.risco
 
 import android.content.ComponentName
 import android.content.Context

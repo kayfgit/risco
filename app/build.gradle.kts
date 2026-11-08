@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kayf.dedo"
+    namespace = "com.kayf.risco"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.kayf.dedo"
+        applicationId = "com.kayf.risco"
         minSdk = 30
         targetSdk = 34
         versionCode = 1

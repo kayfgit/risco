@@ -1,4 +1,4 @@
-# dedo
+# risco
 
 A one-handed Android launcher for people who'd rather not look for things. Every feature is free,
 nothing runs in the background, and there are no icons: just names, under your thumb.
@@ -49,18 +49,18 @@ You need JDK 17 and the Android SDK (platform 34, build-tools 34). Android Studi
 CI runs the format check, lint, tests and a release build on every pull request and push to
 `main`, and keeps the APK for two weeks under the run's artifacts.
 
-Trying dedo doesn't replace your launcher. It installs as a normal app until you run `:default`.
+Trying risco doesn't replace your launcher. It installs as a normal app until you run `:default`.
 
 ## How it's put together
 
 | File | |
 |---|---|
-| [Drag.kt](app/src/main/java/com/kayf/dedo/Drag.kt) | The whole gesture, with no Android in it, so it's tested on the PC |
-| [RailView.kt](app/src/main/java/com/kayf/dedo/RailView.kt) | Feeds touches to `Drag` and draws what it says |
-| [Fuzzy.kt](app/src/main/java/com/kayf/dedo/Fuzzy.kt) | Search ranking and accent folding |
-| [Commands.kt](app/src/main/java/com/kayf/dedo/Commands.kt) | The `:` line |
-| [Apps.kt](app/src/main/java/com/kayf/dedo/Apps.kt) | Installed apps, kept up to date by the system |
-| [MainActivity.kt](app/src/main/java/com/kayf/dedo/MainActivity.kt) | Home, search and wiring |
+| [Drag.kt](app/src/main/java/com/kayf/risco/Drag.kt) | The whole gesture, with no Android in it, so it's tested on the PC |
+| [RailView.kt](app/src/main/java/com/kayf/risco/RailView.kt) | Feeds touches to `Drag` and draws what it says |
+| [Fuzzy.kt](app/src/main/java/com/kayf/risco/Fuzzy.kt) | Search ranking and accent folding |
+| [Commands.kt](app/src/main/java/com/kayf/risco/Commands.kt) | The `:` line |
+| [Apps.kt](app/src/main/java/com/kayf/risco/Apps.kt) | Installed apps, kept up to date by the system |
+| [MainActivity.kt](app/src/main/java/com/kayf/risco/MainActivity.kt) | Home, search and wiring |
 
 No AndroidX, no Compose, no runtime dependencies beyond Kotlin itself.
 

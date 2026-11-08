@@ -1,4 +1,4 @@
-package com.kayf.dedo
+package com.kayf.risco
 
 /** What a command's argument is picked from: nothing, a set of apps, or the command's own choices. */
 enum class Arg { NONE, APP, PINNED, HIDDEN, CHOICE }
