@@ -24,6 +24,11 @@ class Store(context: Context) {
         get() = prefs.getString("clock", "off")!!
         set(value) = prefs.edit().putString("clock", value).apply()
 
+    /** The keyboard's height last time it was up, including the navigation bar under it. 0 until then. */
+    var keyboardHeight: Int
+        get() = prefs.getInt("keyboardHeight", 0)
+        set(value) = prefs.edit().putInt("keyboardHeight", value).apply()
+
     fun pin(key: String) {
         if (key !in pins) pins += key
         savePins()
