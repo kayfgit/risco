@@ -1,9 +1,9 @@
-package com.kayf.dedo
+package com.kayf.risco
 
 import android.content.Context
 
 class Store(context: Context) {
-    private val prefs = context.getSharedPreferences("dedo", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("risco", Context.MODE_PRIVATE)
 
     val pins: MutableList<String> =
         prefs.getString("pins", "")!!.split('\n').filter { it.isNotEmpty() }.toMutableList()

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Renamed from dedo to risco, with a new icon: a lowercase r in one stroke. The app ID changed to
+  `com.kayf.risco`, so it installs beside dedo as a new app; pins, hidden apps and settings start
+  fresh, and dedo can be uninstalled (`:rm dedo`).
+
 - A rail on both edges at once, so either thumb can open apps. The list opens beside the rail you
   pressed. Home and search are centred.
 - Removed `:left` and `:right`, which only moved the single rail.

@@ -1,4 +1,4 @@
-package com.kayf.dedo
+package com.kayf.risco
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -382,7 +382,7 @@ class MainActivity : Activity() {
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
     private companion object {
-        const val TAG = "dedo"
+        const val TAG = "risco"
         const val MAX_HITS = 20
     }
 }

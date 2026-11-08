@@ -19,9 +19,9 @@
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="dedo"
+        android:label="risco"
         android:supportsRtl="false"
-        android:theme="@style/Theme.Dedo">
+        android:theme="@style/Theme.Risco">
 
         <!-- Portrait on purpose: the rail is laid out for a thumb on a phone held upright. -->
         <activity
@@ -39,7 +39,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <!-- Keeps dedo openable as a normal app, so it can be tried without replacing your launcher. -->
+                <!-- Keeps risco openable as a normal app, so it can be tried without replacing your launcher. -->
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

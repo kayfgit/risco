@@ -4,13 +4,12 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- A lowercase d: the bowl, then the stem. -->
+    <!-- A lowercase r in one stroke: up the stem, then out along the arm. -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="7"
-        android:pathData="M58,54a12,12 0 1,0 -24,0a12,12 0 1,0 24,0" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M58,30h7v36h-7z" />
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M41,76V54C41,43 49,35 59,35C63,35 66,36 69,38" />
 </vector>

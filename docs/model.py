@@ -95,7 +95,7 @@ def marks_anywhere(p, rank):
 
 DESIGNS = {
     "stock launcher": stock,
-    "Niagara / dedo today": lambda p, rank: rail(p, rank, 8),
+    "Niagara / risco today": lambda p, rank: rail(p, rank, 8),
     "keyboard search only": keyboard_search,
     "marks at home": marks,
     "marks from anywhere": marks_anywhere,
@@ -112,7 +112,7 @@ def expected(design, p):
 
 def table(p, title):
     print(f"\n{title}")
-    base = expected(DESIGNS["Niagara / dedo today"], p)
+    base = expected(DESIGNS["Niagara / risco today"], p)
     for name, design in DESIGNS.items():
         seconds = expected(design, p)
         print(f"  {name:24} {seconds:5.2f} s  {seconds / base * 100:4.0f}% of Niagara")
@@ -153,7 +153,7 @@ def main():
     table(replace(p16, mark=0.80, mark_error=0.10), "16 marks, much worse on a thumb than the stylus data")
     table(replace(p16, from_app=0.4), "16 marks, most launches start at home")
     table(replace(p16, fitts_b=0.14), "16 marks, faster thumb tapping")
-    saved = expected(DESIGNS["Niagara / dedo today"], p16) - expected(DESIGNS["marks from anywhere"], p16)
+    saved = expected(DESIGNS["Niagara / risco today"], p16) - expected(DESIGNS["marks from anywhere"], p16)
     print(f"\nsaved vs Niagara: {saved:.2f} s per launch, {saved * LAUNCHES_PER_DAY / 60:.1f} min per day")
     table(P(), "assumed zipf usage, for reference")
 

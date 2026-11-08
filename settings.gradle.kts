@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "dedo"
+rootProject.name = "risco"
 include(":app")
