@@ -40,6 +40,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private val rowHeight = 52 * density
     private val rowInset = 14 * density
     private val letterSlot = 22 * density
+    private val iconGap = 10 * density
 
     private var byLetter: Array<List<App>> = Array(LETTERS.length) { emptyList() }
     private var insetTop = 0
@@ -64,6 +65,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private val row = paint(18f, Color.WHITE, Paint.Align.RIGHT)
     private val rowOn = paint(18f, Color.BLACK, Paint.Align.RIGHT).apply { isFakeBoldText = true }
     private val cursor = Paint().apply { color = Color.WHITE }
+    private val iconPaint = Paint(Paint.FILTER_BITMAP_FLAG)
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -216,15 +218,23 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         rowOn.textAlign = row.textAlign
         canvas.save()
         canvas.clipRect(0f, g.panelTop, g.width, g.panelBottom)
+        // Icons go between the name and the rail, so they line up in a column by the thumb.
+        val iconWidth = rows.firstNotNullOfOrNull { it.icon }?.let { it.width + iconGap } ?: 0f
+        val nameX = screenX(near - iconWidth)
         for (i in rows.indices) {
             val top = drag.panelTop + i * g.rowHeight - drag.scroll
             if (top + g.rowHeight < g.panelTop || top > g.panelBottom) continue
             val on = i == drag.selected
             if (on) canvas.drawRect(barLeft, top, barRight, top + g.rowHeight, cursor)
             val paint = if (on) rowOn else row
-            val text = TextUtils.ellipsize(rows[i].label, paint, near - far - rowInset, TextUtils.TruncateAt.END)
+            val room = near - far - rowInset - iconWidth
+            val text = TextUtils.ellipsize(rows[i].label, paint, room, TextUtils.TruncateAt.END)
             val y = top + g.rowHeight / 2 - (paint.ascent() + paint.descent()) / 2
-            canvas.drawText(text, 0, text.length, textX, y, paint)
+            canvas.drawText(text, 0, text.length, nameX, y, paint)
+            rows[i].icon?.let { icon ->
+                val left = if (onLeft) textX else textX - icon.width
+                canvas.drawBitmap(icon, left, top + (g.rowHeight - icon.height) / 2, iconPaint)
+            }
         }
         canvas.restore()
     }

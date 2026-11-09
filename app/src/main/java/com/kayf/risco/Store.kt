@@ -19,10 +19,13 @@ class Store(context: Context) {
         get() = prefs.getBoolean("welcomed", false)
         set(value) = prefs.edit().putBoolean("welcomed", value).apply()
 
-    /** One of [Command.CLOCK]'s choices. */
-    var clock: String
-        get() = prefs.getString("clock", "off")!!
-        set(value) = prefs.edit().putString("clock", value).apply()
+    /** Icons beside app names. Off by default: names are enough once the thumb knows the way. */
+    var icons: Boolean
+        get() = prefs.getBoolean("icons", false)
+        set(value) = prefs.edit().putBoolean("icons", value).apply()
+
+    /** The widgets on home, top to bottom, by their system id. */
+    val widgets: MutableList<Int> = decodeIds(prefs.getString("widgets", "")!!).toMutableList()
 
     /** The keyboard's height last time it was up, including the navigation bar under it. 0 until then. */
     var keyboardHeight: Int
@@ -51,11 +54,28 @@ class Store(context: Context) {
         saveHidden()
     }
 
+    fun addWidget(id: Int) {
+        if (id !in widgets) widgets += id
+        saveWidgets()
+    }
+
+    fun removeWidget(id: Int) {
+        widgets -= id
+        saveWidgets()
+    }
+
     fun launches(key: String) = prefs.getInt("n:$key", 0)
 
     fun launched(key: String) = prefs.edit().putInt("n:$key", launches(key) + 1).apply()
 
     private fun savePins() = prefs.edit().putString("pins", pins.joinToString("\n")).apply()
 
+    private fun saveWidgets() = prefs.edit().putString("widgets", encodeIds(widgets)).apply()
+
     private fun saveHidden() = prefs.edit().putStringSet("hidden", hidden.toSet()).apply()
 }
+
+fun encodeIds(ids: List<Int>) = ids.joinToString(",")
+
+/** Anything that isn't a number is skipped, so a damaged list loses only what's damaged. */
+fun decodeIds(text: String) = text.split(',').mapNotNull { it.trim().toIntOrNull() }

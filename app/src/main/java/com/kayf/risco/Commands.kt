@@ -1,7 +1,10 @@
 package com.kayf.risco
 
-/** What a command's argument is picked from: nothing, a set of apps, or the command's own choices. */
-enum class Arg { NONE, APP, PINNED, HIDDEN, CHOICE }
+/**
+ * What a command's argument is picked from: nothing, a set of apps, the installed widgets, or the
+ * command's own choices.
+ */
+enum class Arg { NONE, APP, PINNED, HIDDEN, WIDGET, CHOICE }
 
 enum class Command(val word: String, val arg: Arg, val help: String, val choices: List<String> = emptyList()) {
     PIN("pin", Arg.APP, "add an app to home"),
@@ -10,7 +13,10 @@ enum class Command(val word: String, val arg: Arg, val help: String, val choices
     UNHIDE("unhide", Arg.HIDDEN, "bring a hidden app back"),
     INFO("info", Arg.APP, "open an app's system page"),
     RM("rm", Arg.APP, "uninstall an app"),
-    CLOCK("clock", Arg.CHOICE, "where the clock goes, or off", listOf("top", "middle", "bottom", "off")),
+    ICONS("icons", Arg.CHOICE, "show app icons, or not", listOf("on", "off")),
+    MENU("menu", Arg.NONE, "what holding home opens"),
+    WALLPAPER("wallpaper", Arg.NONE, "change the wallpaper"),
+    WIDGET("widget", Arg.WIDGET, "add a widget to home"),
     SET("set", Arg.NONE, "open Android settings"),
     DEFAULT("default", Arg.NONE, "choose the default launcher"),
     Q("q", Arg.NONE, "close this"),
