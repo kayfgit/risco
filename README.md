@@ -67,3 +67,12 @@ No AndroidX, no Compose, no runtime dependencies beyond Kotlin itself.
 With gesture navigation, a swipe in from the edge means *back*, and Android lets an app opt out for
 only about 200dp per edge, less than a rail. The opt-out covers the bottom of each rail. Above it,
 sliding along the rail still works, because the back gesture only takes strokes moving inward.
+
+## License
+
+Copyright (C) 2026 Kayf
+
+risco is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See [LICENSE](LICENSE).

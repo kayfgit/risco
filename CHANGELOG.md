@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- risco is now licensed under the GNU GPL v3 or later (GPL-3.0-or-later), copyright Kayf.
+
 - Renamed from dedo to risco, with a new icon: a lowercase r in one stroke. The app ID changed to
   `com.kayf.risco`, so it installs beside dedo as a new app; pins, hidden apps and settings start
   fresh, and dedo can be uninstalled (`:rm dedo`).
