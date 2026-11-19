@@ -5,6 +5,20 @@ nothing runs in the background, and there are no icons unless you ask: just name
 
 Press the alphabet rail, slide to a letter, slide off to an app, let go. That's one stroke.
 
+## Install
+
+1. On your phone, open the [latest release](https://github.com/kayfgit/risco/releases/latest) and
+   download `risco-<version>.apk`.
+2. Open the download. Android asks once to allow installs from your browser; allow it.
+3. Open risco to try it. It doesn't replace your launcher until you type `:default` in search and
+   pick it.
+
+To update, install the newer release the same way: your pins and settings stay. Android 11 or
+newer is needed.
+
+A copy you build yourself is signed with a different key, so it can't update a release install or
+the other way round. Uninstall one before installing the other.
+
 ## Use
 
 | | |
@@ -79,6 +93,18 @@ CI runs the format check, lint, tests and a release build on every pull request 
 `main`, and keeps the APK for two weeks under the run's artifacts.
 
 Trying risco doesn't replace your launcher. It installs as a normal app until you run `:default`.
+
+### Releasing
+
+1. Raise `versionCode` and `versionName` in `app/build.gradle.kts`.
+2. In `CHANGELOG.md`, move what's under Unreleased into a `## <version> - <date>` section that
+   starts with a short TL;DR. That section becomes the release notes.
+3. Merge to `main`, then tag and push: `git tag v<version>` and `git push origin v<version>`.
+
+The release workflow checks the tag matches the version, runs lint and the tests, builds the APK
+signed with the release key from the repository's secrets, checks the signature, and publishes the
+release with the APK attached. The key and its password are also in `.env` (never committed) with
+the key file outside the repository; both need backing up, since a lost key means no more updates.
 
 ## How it's put together
 
