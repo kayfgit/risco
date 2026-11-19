@@ -4,4 +4,12 @@
     <item name="action_search" type="id" />
     <item name="action_notifications" type="id" />
     <item name="action_menu" type="id" />
+    <!-- Editing a widget, which TalkBack and Switch Access can't do by dragging. -->
+    <item name="action_widget_up" type="id" />
+    <item name="action_widget_down" type="id" />
+    <item name="action_widget_taller" type="id" />
+    <item name="action_widget_shorter" type="id" />
+    <item name="action_widget_wider" type="id" />
+    <item name="action_widget_narrower" type="id" />
+    <item name="action_widget_remove" type="id" />
 </resources>

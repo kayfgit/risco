@@ -2,6 +2,7 @@ package com.kayf.risco
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ActivityNotFoundException
@@ -32,12 +33,16 @@ import android.view.Menu
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
     private class Hit(val text: String, val item: Item?, val icon: Bitmap? = null, val run: () -> Unit)
@@ -57,6 +62,7 @@ class MainActivity : Activity() {
     private lateinit var input: EditText
     private lateinit var rail: RailView
     private lateinit var anchor: View
+    private lateinit var editor: WidgetEditor
 
     private var all: List<App> = emptyList()
     private var visible: List<App> = emptyList()
@@ -96,9 +102,10 @@ class MainActivity : Activity() {
         input = findViewById(R.id.input)
         rail = findViewById(R.id.rail)
         anchor = findViewById(R.id.anchor)
+        editor = findViewById(R.id.editor)
 
         store = Store(this)
-        apps = Apps(this) { loaded, pinned ->
+        apps = Apps(this, store::name) { loaded, pinned ->
             all = loaded
             shortcuts = pinned
             store.pinNew(pinned.map { it.key })
@@ -114,6 +121,7 @@ class MainActivity : Activity() {
         rail.onOpen = ::open
         rail.onLetter = ::showLetter
         rail.actions = homeActions
+        wireEditor()
         rail.side = store.railSide
         rail.onSide = { store.railSide = it }
         renderWidgets()
@@ -185,12 +193,13 @@ class MainActivity : Activity() {
 
     private fun closeOverlays() {
         rail.dismiss()
+        editor.finish()
         closeSearch()
     }
 
     private fun refresh() {
         visible = all.filter { it.key !in store.hidden }
-        rail.setApps(visible)
+        rail.setApps(visible, apps.alphabet.letters)
         renderPins()
         if (searching) renderHits()
     }
@@ -327,7 +336,7 @@ class MainActivity : Activity() {
             Arg.CHOICE -> parsed.command.choicesFor(parsed.argument).map { choice ->
                 Hit(":${parsed.command.word} $choice", null) { run(parsed.command, null, choice) }
             }
-            Arg.WIDGET -> rank(choices(), parsed.argument, { it.folded }, { 0 }).map { choice ->
+            Arg.WIDGET -> Fuzzy.rank(choices(), parsed.argument, { listOf(it.folded) }, { 0 }, MAX_HITS).map { choice ->
                 Hit(":${parsed.command.word} ${choice.label}", null) {
                     closeSearch()
                     addWidget(choice.info)
@@ -340,29 +349,14 @@ class MainActivity : Activity() {
     }
 
     private fun pool(arg: Arg): List<Item> = when (arg) {
+        Arg.ITEM -> searchable
         Arg.PINNED -> searchable.filter { it.key in store.pins }
         Arg.HIDDEN -> all.filter { it.key in store.hidden }
         else -> visible
     }
 
     private fun <T : Item> ranked(pool: List<T>, query: String) =
-        rank(pool, query, { it.folded }, { store.launches(it.key) })
-
-    private fun <T> rank(pool: List<T>, query: String, folded: (T) -> String, uses: (T) -> Int): List<T> {
-        val q = Fuzzy.fold(query)
-        return pool.map { it to Fuzzy.score(q, folded(it)) }
-            .filter { it.second >= 0 }
-            .sortedWith(
-                compareBy<Pair<T, Int>>(
-                    { -Fuzzy.tier(it.second) },
-                    { -uses(it.first) },
-                    { -it.second },
-                    { folded(it.first) },
-                ),
-            )
-            .take(MAX_HITS)
-            .map { it.first }
-    }
+        Fuzzy.rank(pool, query, { it.names }, { store.launches(it.key) }, MAX_HITS)
 
     /**
      * Every profile's widgets, work ones marked like work apps. A widget registered twice under one
@@ -383,12 +377,14 @@ class MainActivity : Activity() {
             .also { widgetChoices = it }
     }
 
-    /** [item] is set for commands that take an app; only `:unpin` also takes a shortcut. */
+    /** [item] is set for commands that take an app; `:unpin` and `:rename` also take a shortcut. */
     private fun run(command: Command, item: Item?, choice: String? = null) {
         val app = item as? App
         when (command) {
             Command.PIN -> store.pin(app!!.key)
             Command.UNPIN -> unpin(item!!)
+            // After search closes, so the dialog's keyboard isn't hidden along with search's.
+            Command.RENAME -> root.post { rename(item!!) }
             Command.HIDE -> store.hide(app!!.key)
             Command.UNHIDE -> store.unhide(app!!.key)
             Command.INFO -> apps.details(app!!)
@@ -403,6 +399,45 @@ class MainActivity : Activity() {
         }
         closeSearch()
         refresh()
+    }
+
+    /**
+     * Asks for a new name, starting from the current one. Saving it blank, or as the item's own
+     * name, goes back to its own name, and so does Reset.
+     */
+    private fun rename(item: Item) {
+        val custom = store.name(item.key)
+        val own = item.original.removeSuffix(" [work]")
+        val field = EditText(this).apply {
+            setText(custom ?: own)
+            hint = own
+            isSingleLine = true
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            selectAll()
+        }
+        val box = FrameLayout(this).apply {
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(field)
+        }
+        fun save(name: String?) {
+            store.rename(item.key, name?.trim()?.takeIf { it.isNotEmpty() && it != own })
+            apps.reload()
+        }
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Rename")
+            .setView(box)
+            .setPositiveButton("Save") { _, _ -> save(field.text.toString()) }
+            .setNegativeButton("Cancel", null)
+        if (custom != null) builder.setNeutralButton("Reset") { _, _ -> save(null) }
+        val dialog = builder.create()
+        field.setOnEditorActionListener { _, _, _ ->
+            save(field.text.toString())
+            dialog.dismiss()
+            true
+        }
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        dialog.show()
+        field.requestFocus()
     }
 
     private fun unpin(item: Item) {
@@ -521,42 +556,141 @@ class MainActivity : Activity() {
 
     /** Draws home's widgets, dropping any whose app has been uninstalled. */
     private fun renderWidgets() {
+        editor.finish()
         val gone = store.widgets.filter { widgetManager.getAppWidgetInfo(it) == null }
         for (id in gone) {
             widgetHost.deleteAppWidgetId(id)
             store.removeWidget(id)
         }
         widgets.removeAllViews()
-        val width = resources.displayMetrics.widthPixels - home.paddingLeft - home.paddingRight
         for (id in store.widgets) {
             val info = widgetManager.getAppWidgetInfo(id) ?: continue
             val view = widgetHost.createView(this, id, info) as WidgetView
-            val targetRows = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.targetCellHeight else 0
-            val height = widgetHeight(
-                info.minHeight,
-                info.minResizeHeight,
-                targetRows,
-                dp(WIDGET_ROW),
-                dp(
-                    WIDGET_ROW * 2,
-                ),
-            )
-            sizeWidget(view, width, height)
-            view.onHold = { showWidgetMenu(id, view) }
-            widgets.addView(view, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, height))
+            val height = store.widgetHeight(id).takeIf { it > 0 }?.let(::dp) ?: ownHeight(info)
+            val custom = store.widgetWidth(id).takeIf { it > 0 }?.let(::dp)?.coerceAtMost(columnWidth)
+            sizeWidget(view, custom ?: columnWidth, height)
+            view.onHold = { editWidget(view, info) }
+            view.onDrag = editor::drag
+            describeWidget(view, info, custom ?: columnWidth, height)
+            val params = LinearLayout.LayoutParams(custom ?: LinearLayout.LayoutParams.MATCH_PARENT, height)
+            params.gravity = Gravity.CENTER_HORIZONTAL
+            widgets.addView(view, params)
         }
     }
 
-    private fun showWidgetMenu(id: Int, view: View) {
-        anchor.x = root.width / 2f
-        anchor.y = widgets.y + view.y + view.height / 2f
-        val menu = PopupMenu(this, anchor)
-        menu.menu.add("Remove widget").setOnMenuItemClickListener {
-            removeWidget(id)
-            true
-        }
-        menu.show()
+    /** The width widgets get unless resized: home's column, between the rails. */
+    private val columnWidth get() = resources.displayMetrics.widthPixels - home.paddingLeft - home.paddingRight
+
+    /** The widgets on home, top to bottom, as views. */
+    private fun widgetViews() = (0 until widgets.childCount).map { widgets.getChildAt(it) }
+
+    /** Holding a widget: an outline with corner handles, to drag it around and resize it. */
+    private fun editWidget(view: WidgetView, info: AppWidgetProviderInfo) {
+        root.swipes = false
+        editor.start(view, limits(info), ::widgetViews)
     }
+
+    private fun wireEditor() {
+        editor.onResize = { view, width, height ->
+            view.layoutParams = (view.layoutParams as LinearLayout.LayoutParams).apply {
+                this.width = width
+                this.height = height
+            }
+        }
+        editor.onResized = { view ->
+            val params = view.layoutParams
+            val width = if (params.width > 0) params.width else view.width
+            val height = if (params.height > 0) params.height else view.height
+            store.setWidgetHeight(view.appWidgetId, px2dp(height))
+            // The full column is kept as "full", so it follows the screen if that changes.
+            store.setWidgetWidth(view.appWidgetId, if (width >= columnWidth) 0 else px2dp(width))
+            sizeWidget(view, width, height)
+        }
+        editor.onSwap = { view, by ->
+            // Moves the neighbour rather than the dragged widget, so the stroke stays with it.
+            val at = widgets.indexOfChild(view)
+            val other = widgets.getChildAt(at + by)
+            widgets.removeView(other)
+            widgets.addView(other, at)
+        }
+        editor.onMoved = { store.orderWidgets(widgetViews().map { (it as WidgetView).appWidgetId }) }
+        editor.onRemove = { view -> removeWidget(view.appWidgetId) }
+        editor.onFinish = { root.swipes = !searching }
+    }
+
+    /** The sizes [info]'s widget allows, in px, never wider than home's column. */
+    private fun limits(info: AppWidgetProviderInfo): Limits {
+        val s = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val ownMaxWidth = if (s) info.maxResizeWidth else 0
+        return Limits(
+            minWidth = listOf(info.minResizeWidth, info.minWidth).filter { it > 0 }.minOrNull() ?: dp(WIDGET_ROW),
+            maxWidth = if (ownMaxWidth > 0) minOf(ownMaxWidth, columnWidth) else columnWidth,
+            minHeight = smallest(info),
+            maxHeight = largest(info),
+            horizontal = info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0,
+            vertical = info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0,
+        )
+    }
+
+    /**
+     * TalkBack and Switch Access can't drag, so moving, resizing and removing a widget are in
+     * their actions menu on it, a step at a time, each only when it would change something.
+     */
+    private fun describeWidget(view: WidgetView, info: AppWidgetProviderInfo, width: Int, height: Int) {
+        val id = view.appWidgetId
+        val limits = limits(info)
+        val step = dp(WIDGET_ROW / 2)
+        val actions = mutableListOf<HomeAction>()
+        fun add(action: Int, label: String, run: () -> Unit) = actions.add(
+            HomeAction(action, label) {
+                run()
+                renderWidgets()
+            },
+        )
+        val at = store.widgets.indexOf(id)
+        if (at > 0) add(R.id.action_widget_up, "Move up") { store.moveWidget(id, -1) }
+        if (at < store.widgets.lastIndex) add(R.id.action_widget_down, "Move down") { store.moveWidget(id, 1) }
+        if (limits.vertical) {
+            val taller = resized(height, step, limits.minHeight, limits.maxHeight)
+            val shorter = resized(height, -step, limits.minHeight, limits.maxHeight)
+            if (taller > height) add(R.id.action_widget_taller, "Taller") { store.setWidgetHeight(id, px2dp(taller)) }
+            if (shorter <
+                height
+            ) {
+                add(R.id.action_widget_shorter, "Shorter") { store.setWidgetHeight(id, px2dp(shorter)) }
+            }
+        }
+        if (limits.horizontal) {
+            val wider = resized(width, step, limits.minWidth, limits.maxWidth)
+            val narrower = resized(width, -step, limits.minWidth, limits.maxWidth)
+            fun keep(w: Int) = store.setWidgetWidth(id, if (w >= columnWidth) 0 else px2dp(w))
+            if (wider > width) add(R.id.action_widget_wider, "Wider") { keep(wider) }
+            if (narrower < width) add(R.id.action_widget_narrower, "Narrower") { keep(narrower) }
+        }
+        actions.add(HomeAction(R.id.action_widget_remove, "Remove widget") { removeWidget(id) })
+        view.offer(actions)
+        view.isScreenReaderFocusable = true
+        view.contentDescription = "${info.loadLabel(packageManager)} widget"
+    }
+
+    /** The height a widget asks for, in px, before anyone resizes it. */
+    private fun ownHeight(info: AppWidgetProviderInfo): Int {
+        val targetRows = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.targetCellHeight else 0
+        return widgetHeight(info.minHeight, info.minResizeHeight, targetRows, dp(WIDGET_ROW), dp(WIDGET_ROW * 2))
+    }
+
+    /** The smallest a widget says it can be, in px, or a row if it says nothing. */
+    private fun smallest(info: AppWidgetProviderInfo): Int =
+        listOf(info.minResizeHeight, info.minHeight).filter { it > 0 }.minOrNull() ?: dp(WIDGET_ROW)
+
+    /** The largest a widget says it can be, in px, and never more than most of the screen. */
+    private fun largest(info: AppWidgetProviderInfo): Int {
+        val screen = (resources.displayMetrics.heightPixels * MAX_WIDGET_SHARE).toInt()
+        val own = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.maxResizeHeight else 0
+        return if (own > 0) minOf(own, screen) else screen
+    }
+
+    private fun px2dp(px: Int) = (px / resources.displayMetrics.density).roundToInt()
 
     /** Tells the widget the space it has, in dp, so it can lay itself out for it. */
     private fun sizeWidget(view: WidgetView, width: Int, height: Int) {
@@ -601,7 +735,10 @@ class MainActivity : Activity() {
                 true
             }
         when (item) {
-            is Shortcut -> add(Command.UNPIN, "Remove from home")
+            is Shortcut -> {
+                add(Command.RENAME, "Rename")
+                add(Command.UNPIN, "Remove from home")
+            }
             is App -> {
                 for (shortcut in apps.shortcutsFor(item)) {
                     val label = shortcut.longLabel?.takeIf { it.isNotBlank() } ?: shortcut.shortLabel
@@ -612,6 +749,7 @@ class MainActivity : Activity() {
                     }
                 }
                 if (item.key in store.pins) add(Command.UNPIN, "Remove from home") else add(Command.PIN, "Add to home")
+                add(Command.RENAME, "Rename")
                 add(Command.HIDE, "Hide")
                 add(Command.INFO, "App info")
                 add(Command.RM, "Uninstall")
@@ -667,7 +805,10 @@ class MainActivity : Activity() {
         const val SHORTCUTS = 1
         const val ACTIONS = 2
 
-        /** dp per row a widget asks for, about what a stock launcher gives one. */
+        /** dp per row a widget asks for, about what a stock launcher gives one. Resizing goes half a row at a time. */
         const val WIDGET_ROW = 80
+
+        /** The most of the screen's height one widget can grow to, so home's pins stay in reach. */
+        const val MAX_WIDGET_SHARE = 0.6f
     }
 }

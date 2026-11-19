@@ -19,12 +19,20 @@ import android.os.UserManager
 import android.util.Log
 import kotlin.concurrent.thread
 
-/** Something home and search can list and open. [icon] is only loaded while icons are on. */
+/**
+ * Something home and search can list and open. [label] is what it's shown as, which is the name
+ * someone gave it if they renamed it; [original] is its own name. [icon] is only loaded while
+ * icons are on.
+ */
 sealed interface Item {
     val label: String
+    val original: String
     val key: String
     val icon: Bitmap?
     val folded: String
+
+    /** What search matches, folded: the label, and the original name too if it was renamed. */
+    val names: List<String>
 }
 
 class App(
@@ -32,10 +40,13 @@ class App(
     val component: ComponentName,
     val user: UserHandle,
     override val key: String,
+    /** Which rail letter it goes under, from the phone's [Alphabet]. */
+    val letter: Int,
     override val icon: Bitmap? = null,
+    override val original: String = label,
 ) : Item {
     override val folded = Fuzzy.fold(label)
-    val letter = Fuzzy.letterIndex(label)
+    override val names = listOf(folded, Fuzzy.fold(original)).distinct()
 }
 
 /** A shortcut pinned to home, such as a website from Chrome's "Add to home screen". */
@@ -44,15 +55,21 @@ class Shortcut(
     val info: ShortcutInfo,
     override val key: String,
     override val icon: Bitmap? = null,
+    override val original: String = label,
 ) : Item {
     override val folded = Fuzzy.fold(label)
+    override val names = listOf(folded, Fuzzy.fold(original)).distinct()
 }
 
 /**
- * The installed apps, and the shortcuts pinned to home. Reading labels is slow, so it happens off
- * the main thread.
+ * The installed apps, and the shortcuts pinned to home, each under the name [names] gives its key,
+ * if any. Reading labels is slow, so it happens off the main thread.
  */
-class Apps(private val context: Context, private val onChange: (List<App>, List<Shortcut>) -> Unit) {
+class Apps(
+    private val context: Context,
+    private val names: (key: String) -> String?,
+    private val onChange: (List<App>, List<Shortcut>) -> Unit,
+) {
     private val launcher = context.getSystemService(LauncherApps::class.java)
     private val users = context.getSystemService(UserManager::class.java)
     private val main = Handler(Looper.getMainLooper())
@@ -60,6 +77,9 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
     private var started = false
     private val reload = Runnable { load() }
     private val metrics = context.resources.displayMetrics
+
+    /** The rail's letters, from the phone's languages. A language change restarts home, so this is built once. */
+    val alphabet = phoneAlphabet(context.resources.configuration.locales)
 
     /** The size icons are drawn at: a little taller than an 18sp name, growing with the font. */
     val iconSize = (22 * context.resources.configuration.fontScale * metrics.density).toInt()
@@ -94,6 +114,12 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
     fun changed() {
         main.removeCallbacks(reload)
         main.postDelayed(reload, 300)
+    }
+
+    /** Reads everything again now, such as after a rename. */
+    fun reload() {
+        main.removeCallbacks(reload)
+        load()
     }
 
     fun launch(app: App) = launcher.startMainActivity(app.component, app.user, null, null)
@@ -147,9 +173,12 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
                 launcher.getActivityList(null, user)
                     .filter { it.applicationInfo.packageName != context.packageName }
                     .map {
-                        val label = it.label.toString().trim() + if (user == me) "" else " [work]"
+                        val work = if (user == me) "" else " [work]"
+                        val original = it.label.toString().trim()
                         val key = "${it.componentName.flattenToShortString()}@${users.getSerialNumberForUser(user)}"
-                        App(label, it.componentName, user, key, if (withIcons) icon(it) else null)
+                        val label = displayLabel(original, names(key)) + work
+                        val icon = if (withIcons) icon(it) else null
+                        App(label, it.componentName, user, key, alphabet.letterOf(label), icon, original + work)
                     }
             }.sortedBy { it.folded }
             val pinned = launcher.profiles.flatMap { user ->
@@ -157,15 +186,11 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
                 shortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user)
                     .filter { it.isEnabled }
                     .map { info ->
-                        val label = shortcutLabel(info) + if (user == me) "" else " [work]"
-                        val icon = if (withIcons) {
-                            grey(
-                                launcher.getShortcutIconDrawable(info, metrics.densityDpi),
-                            )
-                        } else {
-                            null
-                        }
-                        Shortcut(label, info, shortcutKey(info.`package`, info.id, serial), icon)
+                        val work = if (user == me) "" else " [work]"
+                        val original = shortcutLabel(info)
+                        val key = shortcutKey(info.`package`, info.id, serial)
+                        val icon = if (withIcons) shortcutIcon(info) else null
+                        Shortcut(displayLabel(original, names(key)) + work, info, key, icon, original + work)
                     }
             }
             main.post { if (generation == latest) onChange(loaded, pinned) }
@@ -174,6 +199,9 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
 
     /** In grey, so the icons sit with the white names instead of competing with them. */
     private fun icon(info: LauncherActivityInfo): Bitmap? = grey(info.getIcon(metrics.densityDpi))
+
+    private fun shortcutIcon(info: ShortcutInfo): Bitmap? =
+        grey(launcher.getShortcutIconDrawable(info, metrics.densityDpi))
 
     private fun grey(icon: Drawable?): Bitmap? = runCatching {
         val drawable = icon!!.mutate()

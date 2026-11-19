@@ -11,13 +11,6 @@ object Fuzzy {
     fun fold(text: String): String =
         Normalizer.normalize(text, Normalizer.Form.NFD).replace(marks, "").lowercase()
 
-    /** The rail letter a label belongs under, as an index into [LETTERS]. */
-    fun letterIndex(label: String): Int {
-        val first = fold(label).firstOrNull()?.uppercaseChar() ?: '#'
-        val index = LETTERS.indexOf(first)
-        return if (index >= 0) index else LETTERS.length - 1
-    }
-
     /**
      * Higher is better, -1 is no match. Both arguments must already be folded.
      * Deliberately tiers rather than a blended score: [tier] says how the query matched, and a
@@ -44,4 +37,26 @@ object Fuzzy {
     }
 
     fun tier(score: Int) = score / 1000
+
+    /**
+     * The best [limit] matches for [query] in [pool]. Each item can go by several [names] (a
+     * renamed app keeps its old one), already folded, and the best of them counts. A closer kind
+     * of match comes first, then the item [uses] says is opened more, then the closer score, then
+     * the alphabet.
+     */
+    fun <T> rank(pool: List<T>, query: String, names: (T) -> List<String>, uses: (T) -> Int, limit: Int): List<T> {
+        val q = fold(query)
+        return pool.map { item -> item to names(item).maxOf { score(q, it) } }
+            .filter { it.second >= 0 }
+            .sortedWith(
+                compareBy<Pair<T, Int>>(
+                    { -tier(it.second) },
+                    { -uses(it.first) },
+                    { -it.second },
+                    { names(it.first).first() },
+                ),
+            )
+            .take(limit)
+            .map { it.first }
+    }
 }

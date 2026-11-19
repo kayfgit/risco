@@ -71,7 +71,41 @@ class Store(context: Context) {
     fun removeWidget(id: Int) {
         widgets -= id
         saveWidgets()
+        prefs.edit().remove("wh:$id").remove("ww:$id").apply()
     }
+
+    /** Puts the widgets in [ids]' order, as left after dragging one. */
+    fun orderWidgets(ids: List<Int>) {
+        if (ids.toSet() != widgets.toSet()) return
+        widgets.clear()
+        widgets += ids
+        saveWidgets()
+    }
+
+    /** Moves a widget [by] places, up for negative. */
+    fun moveWidget(id: Int, by: Int) {
+        val next = moved(widgets, id, by)
+        widgets.clear()
+        widgets += next
+        saveWidgets()
+    }
+
+    /** The height someone gave a widget, in dp so it survives a display size change, or 0 for its own. */
+    fun widgetHeight(id: Int) = prefs.getInt("wh:$id", 0)
+
+    fun setWidgetHeight(id: Int, dp: Int) = prefs.edit().putInt("wh:$id", dp).apply()
+
+    /** The width someone gave a widget, in dp, or 0 for home's full column. */
+    fun widgetWidth(id: Int) = prefs.getInt("ww:$id", 0)
+
+    fun setWidgetWidth(id: Int, dp: Int) = prefs.edit().putInt("ww:$id", dp).apply()
+
+    /** The name someone gave an app or shortcut, or null for its own. */
+    fun name(key: String): String? = prefs.getString("name:$key", null)
+
+    fun rename(key: String, name: String?) = prefs.edit().apply {
+        if (name == null) remove("name:$key") else putString("name:$key", name)
+    }.apply()
 
     fun launches(key: String) = prefs.getInt("n:$key", 0)
 
@@ -83,6 +117,9 @@ class Store(context: Context) {
 
     private fun saveHidden() = prefs.edit().putStringSet("hidden", hidden.toSet()).apply()
 }
+
+/** What an app or shortcut is called: the name someone gave it, if any, or its own. */
+fun displayLabel(original: String, custom: String?) = custom?.trim()?.takeIf { it.isNotEmpty() } ?: original
 
 fun encodeIds(ids: List<Int>) = ids.joinToString(",")
 

@@ -1,14 +1,15 @@
 package com.kayf.risco
 
 /**
- * What a command's argument is picked from: nothing, a set of apps, the installed widgets, or the
- * command's own choices.
+ * What a command's argument is picked from: nothing, a set of apps (ITEM adds pinned shortcuts),
+ * the installed widgets, or the command's own choices.
  */
-enum class Arg { NONE, APP, PINNED, HIDDEN, WIDGET, CHOICE }
+enum class Arg { NONE, APP, ITEM, PINNED, HIDDEN, WIDGET, CHOICE }
 
 enum class Command(val word: String, val arg: Arg, val help: String, val choices: List<String> = emptyList()) {
     PIN("pin", Arg.APP, "Add an app to home"),
     UNPIN("unpin", Arg.PINNED, "Remove an app or shortcut from home"),
+    RENAME("rename", Arg.ITEM, "Rename an app or shortcut"),
     HIDE("hide", Arg.APP, "Hide an app from the rail and search"),
     UNHIDE("unhide", Arg.HIDDEN, "Bring back a hidden app"),
     INFO("info", Arg.APP, "Open an app's info page"),

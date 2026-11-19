@@ -4,9 +4,9 @@ import android.os.Bundle
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 
-/** How TalkBack reads a rail letter. `#` holds names that don't start with A to Z, so it's read as "Other". */
-fun letterDescription(letter: Char, apps: Int): String {
-    val name = if (letter == '#') "Other" else letter.toString()
+/** How TalkBack reads a rail letter. [OTHER] holds names that start with no letter, so it's read as "Other". */
+fun letterDescription(letter: String, apps: Int): String {
+    val name = if (letter == OTHER) "Other" else letter
     return "$name, $apps ${if (apps == 1) "app" else "apps"}"
 }
 

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- The rail's letters follow the phone's languages, plus A to Z since most app names are Latin.
+  A Russian phone gets А to Я, a Japanese one the kana rows, and Chinese names are filed under
+  their pinyin letter. Longer alphabets get smaller letters to fit.
+- Rename any app or pinned shortcut: hold it and choose Rename, or type `:rename <app>`. It moves
+  to its new letter on the rail, and search still finds it by its old name too. Reset, or saving
+  it blank, brings back the app's own name.
+- Edit widgets by holding them. An outline appears with a dot on each corner: drag a corner to
+  resize (taller, shorter, wider, narrower, within what the widget allows), drag the widget to
+  move it above or below others, or tap Remove. Tap anywhere else to finish. TalkBack and Switch
+  Access users get the same moves in the actions menu.
+
 - Holding an app shows its shortcuts, like "New message" or "New tab", above the other choices.
   Up to four, the app's main ones first. Needs risco to be the default launcher.
 - Other apps can add shortcuts to home, such as a website from Chrome's "Add to home screen" or a

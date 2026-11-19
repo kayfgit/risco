@@ -27,13 +27,6 @@ class InputTest {
     @Test
     fun `accents do not matter`() {
         assertTrue(score("camera", "Câmera") > 0)
-        assertEquals(LETTERS.indexOf('E'), Fuzzy.letterIndex("Éter"))
-    }
-
-    @Test
-    fun `labels that do not start with a letter go under hash`() {
-        assertEquals(LETTERS.indexOf('#'), Fuzzy.letterIndex("2048"))
-        assertEquals(LETTERS.indexOf('#'), Fuzzy.letterIndex(""))
     }
 
     @Test

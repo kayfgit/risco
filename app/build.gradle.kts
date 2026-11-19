@@ -52,4 +52,6 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    // The library Android's android.icu comes from, so alphabet tests run on the PC.
+    testImplementation("com.ibm.icu:icu4j:76.1")
 }
