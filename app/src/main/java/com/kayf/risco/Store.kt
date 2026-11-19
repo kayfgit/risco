@@ -19,6 +19,11 @@ class Store(context: Context) {
         get() = prefs.getBoolean("welcomed", false)
         set(value) = prefs.edit().putBoolean("welcomed", value).apply()
 
+    /** The rail's alphabet, as `:alphabet` names it. */
+    var alphabet: String
+        get() = prefs.getString("alphabet", AlphabetChoice.DEFAULT.word)!!
+        set(value) = prefs.edit().putString("alphabet", value).apply()
+
     /** Icons beside app names. Off by default: names are enough once the thumb knows the way. */
     var icons: Boolean
         get() = prefs.getBoolean("icons", false)

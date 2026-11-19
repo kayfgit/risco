@@ -6,21 +6,24 @@ package com.kayf.risco
  */
 enum class Arg { NONE, APP, ITEM, PINNED, HIDDEN, WIDGET, CHOICE }
 
-enum class Command(val word: String, val arg: Arg, val help: String, val choices: List<String> = emptyList()) {
-    PIN("pin", Arg.APP, "Add an app to home"),
-    UNPIN("unpin", Arg.PINNED, "Remove an app or shortcut from home"),
-    RENAME("rename", Arg.ITEM, "Rename an app or shortcut"),
-    HIDE("hide", Arg.APP, "Hide an app from the rail and search"),
-    UNHIDE("unhide", Arg.HIDDEN, "Bring back a hidden app"),
-    INFO("info", Arg.APP, "Open an app's info page"),
-    RM("rm", Arg.APP, "Uninstall an app"),
-    ICONS("icons", Arg.CHOICE, "Show or hide app icons", listOf("on", "off")),
-    MENU("menu", Arg.NONE, "Open the home menu"),
-    WALLPAPER("wallpaper", Arg.NONE, "Change the wallpaper"),
-    WIDGET("widget", Arg.WIDGET, "Add a widget to home"),
-    SET("set", Arg.NONE, "open Android settings"),
-    DEFAULT("default", Arg.NONE, "Choose your home app"),
-    Q("q", Arg.NONE, "Close search"),
+/** [word] is typed and stays English; [help] is shown beside it, in risco's language. */
+enum class Command(val word: String, val arg: Arg, val help: Int, val choices: List<String> = emptyList()) {
+    PIN("pin", Arg.APP, R.string.help_pin),
+    UNPIN("unpin", Arg.PINNED, R.string.help_unpin),
+    RENAME("rename", Arg.ITEM, R.string.help_rename),
+    HIDE("hide", Arg.APP, R.string.help_hide),
+    UNHIDE("unhide", Arg.HIDDEN, R.string.help_unhide),
+    INFO("info", Arg.APP, R.string.help_info),
+    RM("rm", Arg.APP, R.string.help_rm),
+    ICONS("icons", Arg.CHOICE, R.string.help_icons, listOf("on", "off")),
+    ALPHABET("alphabet", Arg.CHOICE, R.string.help_alphabet, AlphabetChoice.entries.map { it.word }),
+    LANGUAGE("language", Arg.NONE, R.string.help_language),
+    MENU("menu", Arg.NONE, R.string.help_menu),
+    WALLPAPER("wallpaper", Arg.NONE, R.string.help_wallpaper),
+    WIDGET("widget", Arg.WIDGET, R.string.help_widget),
+    SET("set", Arg.NONE, R.string.help_set),
+    DEFAULT("default", Arg.NONE, R.string.help_default),
+    Q("q", Arg.NONE, R.string.help_q),
 }
 
 sealed class Input {

@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.view.View
 import android.view.accessibility.AccessibilityNodeInfo
 
-/** How TalkBack reads a rail letter. [OTHER] holds names that start with no letter, so it's read as "Other". */
-fun letterDescription(letter: String, apps: Int): String {
-    val name = if (letter == OTHER) "Other" else letter
-    return "$name, $apps ${if (apps == 1) "app" else "apps"}"
-}
+/**
+ * How TalkBack names a rail letter. [OTHER] holds names that start with no letter, so it's read as
+ * [other] ("Other" in English) rather than as a symbol.
+ */
+fun letterName(letter: String, other: String) = if (letter == OTHER) other else letter
 
 /**
  * Something home does on a swipe or a hold. TalkBack and Switch Access can't swipe or hold on

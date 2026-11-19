@@ -1,6 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Lines stay under 26 characters to fit between the rails without wrapping. -->
+    <!-- Lines stay under 26 characters (13 for full-width scripts) to fit between the rails
+         without wrapping. Typed commands like :default stay in English in every language. -->
     <string name="hint">Welcome to risco.\n\nPress either edge,\nslide to a letter,\nthen off to an app,\nand let go.\n\nSwipe up to search.\nType : for commands.\nHold empty space for\nwallpaper and widgets.\n:default sets your home.\n\nThis note goes away\nonce you open an app.</string>
     <string name="search_hint">Search, or : for commands</string>
+
+    <!-- After the name of a work profile's app. Keep the leading space. -->
+    <string name="work_suffix">" [work]"</string>
+
+    <!-- Holding an app or a pinned shortcut. -->
+    <string name="add_to_home">Add to home</string>
+    <string name="remove_from_home">Remove from home</string>
+    <string name="rename">Rename</string>
+    <string name="hide">Hide</string>
+    <string name="app_info">App info</string>
+    <string name="uninstall">Uninstall</string>
+
+    <!-- Holding empty space on home. -->
+    <string name="menu_wallpaper">Wallpaper</string>
+    <string name="menu_widgets">Widgets</string>
+    <string name="menu_show_icons">Show icons</string>
+    <string name="menu_hide_icons">Hide icons</string>
+    <string name="menu_commands">Commands</string>
+
+    <!-- Dialogs. -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="reset">Reset</string>
+    <string name="add">Add</string>
+    <string name="pin_title">Add to home screen?</string>
+
+    <!-- The button under a widget being edited. -->
+    <string name="remove">Remove</string>
+
+    <!-- Messages. %1$s is an app or shortcut's name. -->
+    <string name="cant_open">Can\'t open %1$s</string>
+    <string name="no_wallpaper_app">No wallpaper app found</string>
+
+    <!-- For TalkBack and Switch Access, which can't swipe, hold or drag on home. -->
+    <string name="action_search">Search apps</string>
+    <string name="action_notifications">Notifications</string>
+    <string name="action_wallpaper_widgets">Wallpaper and widgets</string>
+    <string name="widget_up">Move up</string>
+    <string name="widget_down">Move down</string>
+    <string name="widget_taller">Taller</string>
+    <string name="widget_shorter">Shorter</string>
+    <string name="widget_wider">Wider</string>
+    <string name="widget_narrower">Narrower</string>
+    <string name="widget_remove">Remove widget</string>
+    <!-- %1$s is the widget's name. -->
+    <string name="widget_description">%1$s widget</string>
+    <!-- The rail's last letter, #, which holds names that start with no letter. -->
+    <string name="letter_other">Other</string>
+    <!-- A rail letter, read as "G, 10 apps". %1$s is the letter, %2$d how many apps it holds. -->
+    <plurals name="letter_apps">
+        <item quantity="one">%1$s, %2$d app</item>
+        <item quantity="other">%1$s, %2$d apps</item>
+    </plurals>
+
+    <!-- Shown beside each typed command in search. The commands themselves stay in English. -->
+    <string name="help_pin">Add an app to home</string>
+    <string name="help_unpin">Remove an app or shortcut from home</string>
+    <string name="help_rename">Rename an app or shortcut</string>
+    <string name="help_hide">Hide an app from the rail and search</string>
+    <string name="help_unhide">Bring back a hidden app</string>
+    <string name="help_info">Open an app\'s info page</string>
+    <string name="help_rm">Uninstall an app</string>
+    <string name="help_icons">Show or hide app icons</string>
+    <string name="help_alphabet">Choose the rail\'s letters</string>
+    <string name="help_language">Choose risco\'s language</string>
+    <string name="help_menu">Open the home menu</string>
+    <string name="help_wallpaper">Change the wallpaper</string>
+    <string name="help_widget">Add a widget to home</string>
+    <string name="help_set">Open Android settings</string>
+    <string name="help_default">Choose your home app</string>
+    <string name="help_q">Close search</string>
 </resources>

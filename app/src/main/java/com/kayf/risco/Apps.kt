@@ -78,8 +78,24 @@ class Apps(
     private val reload = Runnable { load() }
     private val metrics = context.resources.displayMetrics
 
-    /** The rail's letters, from the phone's languages. A language change restarts home, so this is built once. */
-    val alphabet = phoneAlphabet(context.resources.configuration.locales)
+    /** Marks a work profile's apps, as " [work]" in English. */
+    private val workSuffix = context.getString(R.string.work_suffix)
+
+    /**
+     * The rail's letters: the phone's languages unless `:alphabet` picked one. A language change
+     * restarts home, so the phone's languages are read once.
+     */
+    var alphabet = phoneAlphabet(context.resources.configuration.locales)
+        private set
+
+    /** Which alphabet `:alphabet` picked. Changing it files every app again. */
+    var choice = AlphabetChoice.DEFAULT
+        set(value) {
+            if (field == value) return
+            field = value
+            alphabet = phoneAlphabet(context.resources.configuration.locales, value)
+            if (started) load()
+        }
 
     /** The size icons are drawn at: a little taller than an 18sp name, growing with the font. */
     val iconSize = (22 * context.resources.configuration.fontScale * metrics.density).toInt()
@@ -173,7 +189,7 @@ class Apps(
                 launcher.getActivityList(null, user)
                     .filter { it.applicationInfo.packageName != context.packageName }
                     .map {
-                        val work = if (user == me) "" else " [work]"
+                        val work = if (user == me) "" else workSuffix
                         val original = it.label.toString().trim()
                         val key = "${it.componentName.flattenToShortString()}@${users.getSerialNumberForUser(user)}"
                         val label = displayLabel(original, names(key)) + work
@@ -186,7 +202,7 @@ class Apps(
                 shortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user)
                     .filter { it.isEnabled }
                     .map { info ->
-                        val work = if (user == me) "" else " [work]"
+                        val work = if (user == me) "" else workSuffix
                         val original = shortcutLabel(info)
                         val key = shortcutKey(info.`package`, info.id, serial)
                         val icon = if (withIcons) shortcutIcon(info) else null

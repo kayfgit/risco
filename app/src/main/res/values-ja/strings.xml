@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hint">risco へようこそ。\n\n端を押して、\n文字までスライド、\nそのままアプリへ、\n指を離す。\n\n上にスワイプで検索。\n: でコマンド。\n空いた所を長押しで\n壁紙とウィジェット。\n:default でホームに設定。\n\nこのメモは\nアプリを開くと消えます。</string>
+    <string name="search_hint">検索、または : でコマンド</string>
+    <string name="work_suffix">" [仕事]"</string>
+    <string name="add_to_home">ホームに追加</string>
+    <string name="remove_from_home">ホームから削除</string>
+    <string name="rename">名前を変更</string>
+    <string name="hide">非表示</string>
+    <string name="app_info">アプリ情報</string>
+    <string name="uninstall">アンインストール</string>
+    <string name="menu_wallpaper">壁紙</string>
+    <string name="menu_widgets">ウィジェット</string>
+    <string name="menu_show_icons">アイコンを表示</string>
+    <string name="menu_hide_icons">アイコンを非表示</string>
+    <string name="menu_commands">コマンド</string>
+    <string name="save">保存</string>
+    <string name="cancel">キャンセル</string>
+    <string name="reset">元に戻す</string>
+    <string name="add">追加</string>
+    <string name="pin_title">ホーム画面に追加しますか？</string>
+    <string name="remove">削除</string>
+    <string name="cant_open">%1$s を開けません</string>
+    <string name="no_wallpaper_app">壁紙アプリが見つかりません</string>
+    <string name="action_search">アプリを検索</string>
+    <string name="action_notifications">通知</string>
+    <string name="action_wallpaper_widgets">壁紙とウィジェット</string>
+    <string name="widget_up">上へ移動</string>
+    <string name="widget_down">下へ移動</string>
+    <string name="widget_taller">高くする</string>
+    <string name="widget_shorter">低くする</string>
+    <string name="widget_wider">広くする</string>
+    <string name="widget_narrower">狭くする</string>
+    <string name="widget_remove">ウィジェットを削除</string>
+    <string name="widget_description">%1$s ウィジェット</string>
+    <string name="letter_other">その他</string>
+    <plurals name="letter_apps">
+        <item quantity="other">%1$s、%2$d 個のアプリ</item>
+    </plurals>
+    <string name="help_pin">アプリをホームに追加</string>
+    <string name="help_unpin">アプリやショートカットをホームから削除</string>
+    <string name="help_rename">アプリやショートカットの名前を変更</string>
+    <string name="help_hide">アプリをレールと検索から隠す</string>
+    <string name="help_unhide">隠したアプリを戻す</string>
+    <string name="help_info">アプリの情報ページを開く</string>
+    <string name="help_rm">アプリをアンインストール</string>
+    <string name="help_icons">アプリのアイコンを表示または非表示</string>
+    <string name="help_alphabet">レールの文字を選ぶ</string>
+    <string name="help_language">risco の言語を選ぶ</string>
+    <string name="help_menu">ホームのメニューを開く</string>
+    <string name="help_wallpaper">壁紙を変更</string>
+    <string name="help_widget">ウィジェットをホームに追加</string>
+    <string name="help_set">Android の設定を開く</string>
+    <string name="help_default">ホームアプリを選ぶ</string>
+    <string name="help_q">検索を閉じる</string>
+</resources>

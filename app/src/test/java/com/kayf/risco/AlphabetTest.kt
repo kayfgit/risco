@@ -1,6 +1,7 @@
 package com.kayf.risco
 
 import com.ibm.icu.text.AlphabeticIndex
+import com.ibm.icu.text.Transliterator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -20,10 +21,65 @@ class AlphabetTest {
         return alphabetOf(
             buckets.map { it.label },
             buckets.map { it.labelType == AlphabeticIndex.Bucket.LabelType.NORMAL },
-        ) { built.getBucketIndex(it) }
+            bucketOf = { built.getBucketIndex(it) },
+        )
     }
 
     private fun Alphabet.under(name: String) = letters[letterOf(name)]
+
+    /** What [phoneAlphabet] builds for a `:alphabet` choice, with ICU4J. */
+    private fun chosen(choice: AlphabetChoice): Alphabet {
+        val index = AlphabeticIndex<String>(Locale.forLanguageTag(choice.language!!)).setMaxLabelCount(MAX_LETTERS)
+        val built = index.buildImmutableIndex()
+        val buckets = (0 until built.bucketCount).map { built.getBucket(it) }
+        val into = Transliterator.getInstance(choice.into!!)
+        return alphabetOf(
+            buckets.map { it.label },
+            buckets.map { it.labelType == AlphabeticIndex.Bucket.LabelType.NORMAL },
+            { built.getBucketIndex(it) },
+            { into.transliterate(it) },
+        )
+    }
+
+    @Test fun `the English rail is just A to Z, then hash`() =
+        assertEquals(('A'..'Z').map { it.toString() } + OTHER, chosen(AlphabetChoice.ENGLISH).letters)
+
+    @Test fun `on the English rail, other scripts are romanized to find their letter`() {
+        val a = chosen(AlphabetChoice.ENGLISH)
+        assertEquals("K", a.under("Камера"))
+        assertEquals("K", a.under("カメラ"))
+        assertEquals("W", a.under("微信"))
+        assertEquals("U", a.under("Übersetzer"))
+        assertEquals(OTHER, a.under("2048"))
+    }
+
+    @Test fun `the Russian rail has no A to Z, and Latin names find a Russian letter`() {
+        val a = chosen(AlphabetChoice.RUSSIAN)
+        assertTrue("A" !in a.letters && "А" in a.letters)
+        assertEquals("Т", a.under("Телеграм"))
+        assertEquals("М", a.under("Maps"))
+        assertEquals("Т", a.under("Telegram"))
+    }
+
+    @Test fun `the Japanese rail is the kana rows, and Latin names find a row`() {
+        val a = chosen(AlphabetChoice.JAPANESE)
+        assertTrue("A" !in a.letters && "あ" in a.letters)
+        assertEquals("か", a.under("カメラ"))
+        assertEquals("ま", a.under("Maps"))
+    }
+
+    @Test fun `every alphabet choice builds, and files a Latin name under a real letter`() {
+        for (choice in AlphabetChoice.entries.filter { it != AlphabetChoice.DEFAULT }) {
+            val a = chosen(choice)
+            assertTrue("$choice has letters", a.letters.size > 5)
+            assertTrue("$choice files Maps", a.under("Maps") != OTHER)
+        }
+    }
+
+    @Test fun `choices are found by the word typed`() {
+        assertEquals(AlphabetChoice.RUSSIAN, AlphabetChoice.of("russian"))
+        assertEquals(AlphabetChoice.DEFAULT, AlphabetChoice.of("nonsense"))
+    }
 
     @Test fun `an English or German phone gets A to Z, then hash`() {
         val expected = ('A'..'Z').map { it.toString() } + OTHER
@@ -69,6 +125,4 @@ class AlphabetTest {
         assertEquals("Λ", a.under("Λεξικό"))
         assertEquals("M", a.under("Maps"))
     }
-
-    @Test fun `how TalkBack reads hash`() = assertEquals("Other, 1 app", letterDescription(OTHER, 1))
 }

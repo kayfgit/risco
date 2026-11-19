@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- risco speaks German, Portuguese, Spanish, French, Russian and Japanese, following the phone. On
+  Android 13 and up you can give risco its own language with `:language`. Typed commands stay in
+  English.
+- Pick the rail's letters with `:alphabet`: `english`, `russian`, `japanese`, `greek`, `korean`,
+  `arabic`, `hebrew`, `hindi`, `thai`, or `default` for the phone's languages plus A to Z. Names
+  in other scripts are spelled in the chosen alphabet to find their letter, so "Камера" goes under
+  K on the English rail. The name shown doesn't change.
+
 - The rail's letters follow the phone's languages, plus A to Z since most app names are Latin.
   A Russian phone gets А to Я, a Japanese one the kana rows, and Chinese names are filed under
   their pinyin letter. Longer alphabets get smaller letters to fit.

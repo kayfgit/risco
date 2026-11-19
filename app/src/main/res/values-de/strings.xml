@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hint">Willkommen bei risco.\n\nDrück einen Rand,\nzieh zu einem Buchstaben,\ndann zu einer App\nund lass los.\n\nNach oben wischen\nzum Suchen.\n: für Befehle.\nLeere Stelle halten für\nHintergrund und Widgets.\n:default macht risco\nzum Startbildschirm.\n\nDieser Hinweis geht weg,\nwenn du eine App öffnest.</string>
+    <string name="search_hint">Suchen, oder : für Befehle</string>
+    <string name="work_suffix">" [Arbeit]"</string>
+    <string name="add_to_home">Zum Startbildschirm</string>
+    <string name="remove_from_home">Vom Startbildschirm entfernen</string>
+    <string name="rename">Umbenennen</string>
+    <string name="hide">Ausblenden</string>
+    <string name="app_info">App-Info</string>
+    <string name="uninstall">Deinstallieren</string>
+    <string name="menu_wallpaper">Hintergrund</string>
+    <string name="menu_widgets">Widgets</string>
+    <string name="menu_show_icons">Symbole anzeigen</string>
+    <string name="menu_hide_icons">Symbole ausblenden</string>
+    <string name="menu_commands">Befehle</string>
+    <string name="save">Speichern</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="reset">Zurücksetzen</string>
+    <string name="add">Hinzufügen</string>
+    <string name="pin_title">Zum Startbildschirm hinzufügen?</string>
+    <string name="remove">Entfernen</string>
+    <string name="cant_open">%1$s lässt sich nicht öffnen</string>
+    <string name="no_wallpaper_app">Keine Hintergrund-App gefunden</string>
+    <string name="action_search">Apps suchen</string>
+    <string name="action_notifications">Benachrichtigungen</string>
+    <string name="action_wallpaper_widgets">Hintergrund und Widgets</string>
+    <string name="widget_up">Nach oben</string>
+    <string name="widget_down">Nach unten</string>
+    <string name="widget_taller">Höher</string>
+    <string name="widget_shorter">Niedriger</string>
+    <string name="widget_wider">Breiter</string>
+    <string name="widget_narrower">Schmaler</string>
+    <string name="widget_remove">Widget entfernen</string>
+    <string name="widget_description">Widget %1$s</string>
+    <string name="letter_other">Andere</string>
+    <plurals name="letter_apps">
+        <item quantity="one">%1$s, %2$d App</item>
+        <item quantity="other">%1$s, %2$d Apps</item>
+    </plurals>
+    <string name="help_pin">App zum Startbildschirm hinzufügen</string>
+    <string name="help_unpin">App oder Verknüpfung vom Startbildschirm entfernen</string>
+    <string name="help_rename">App oder Verknüpfung umbenennen</string>
+    <string name="help_hide">App aus Leiste und Suche ausblenden</string>
+    <string name="help_unhide">Ausgeblendete App zurückholen</string>
+    <string name="help_info">Info-Seite einer App öffnen</string>
+    <string name="help_rm">App deinstallieren</string>
+    <string name="help_icons">App-Symbole anzeigen oder ausblenden</string>
+    <string name="help_alphabet">Buchstaben der Leiste wählen</string>
+    <string name="help_language">Sprache von risco wählen</string>
+    <string name="help_menu">Startbildschirm-Menü öffnen</string>
+    <string name="help_wallpaper">Hintergrund ändern</string>
+    <string name="help_widget">Widget zum Startbildschirm hinzufügen</string>
+    <string name="help_set">Android-Einstellungen öffnen</string>
+    <string name="help_default">Standard-Startbildschirm wählen</string>
+    <string name="help_q">Suche schließen</string>
+</resources>

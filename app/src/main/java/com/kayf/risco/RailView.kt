@@ -311,7 +311,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             setParent(this@RailView)
             packageName = context.packageName
             className = Button::class.java.name
-            contentDescription = letterDescription(letters[id], byLetter[id].size)
+            contentDescription = describe(id)
             isEnabled = true
             isClickable = true
             isScreenReaderFocusable = true
@@ -356,6 +356,12 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         }
     }
 
+    /** "G, 10 apps", in risco's language. */
+    private fun describe(id: Int): String {
+        val name = letterName(letters[id], resources.getString(R.string.letter_other))
+        return resources.getQuantityString(R.plurals.letter_apps, byLetter[id].size, name, byLetter[id].size)
+    }
+
     private fun hover(letter: Int) {
         if (letter == hovered) return
         val old = hovered
@@ -394,7 +400,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             setSource(this@RailView, id)
             packageName = context.packageName
             className = Button::class.java.name
-            contentDescription = letterDescription(letters[id], byLetter[id].size)
+            contentDescription = describe(id)
         }
         parent?.requestSendAccessibilityEvent(this, event)
     }

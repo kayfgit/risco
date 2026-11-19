@@ -44,6 +44,9 @@ android {
         // (35 forces edge-to-edge), so it's done on purpose and tested on a phone, not to quiet lint.
         informational += "OldTargetApi"
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
     packaging {
         resources.excludes +=
             setOf("META-INF/*.version", "META-INF/**/*.kotlin_builtins", "kotlin/**", "DebugProbesKt.bin")
@@ -54,4 +57,6 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     // The library Android's android.icu comes from, so alphabet tests run on the PC.
     testImplementation("com.ibm.icu:icu4j:76.1")
+    // Runs Android on the PC, so a test can open home the way the phone does.
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

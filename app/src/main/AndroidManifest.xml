@@ -24,6 +24,8 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="risco"
+        android:localeConfig="@xml/locales_config"
+        tools:targetApi="tiramisu"
         android:supportsRtl="false"
         android:theme="@style/Theme.Risco">
 
