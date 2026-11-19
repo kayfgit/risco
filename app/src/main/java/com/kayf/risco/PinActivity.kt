@@ -22,7 +22,9 @@ class PinActivity : Activity() {
             .onFailure { Log.w(TAG, "unreadable pin request", it) }
             .getOrNull()
         val shortcut = request?.shortcutInfo
-        if (request == null || !request.isValid || request.requestType != PinItemRequest.REQUEST_TYPE_SHORTCUT ||
+        if (request == null ||
+            !request.isValid ||
+            request.requestType != PinItemRequest.REQUEST_TYPE_SHORTCUT ||
             shortcut == null
         ) {
             finish()
