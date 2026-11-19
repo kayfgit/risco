@@ -1,0 +1,9 @@
+# Made by rec.sh, story.py and render.py
+*.mp4
+*.mkv
+*.dex
+classes/
+demo.txt
+touches.json
+story.json
+mask.png
