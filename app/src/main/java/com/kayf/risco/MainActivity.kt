@@ -62,6 +62,7 @@ class MainActivity : Activity() {
     private lateinit var input: EditText
     private lateinit var rail: RailView
     private lateinit var anchor: View
+    private lateinit var editor: WidgetEditor
 
     private var all: List<App> = emptyList()
     private var visible: List<App> = emptyList()
@@ -101,6 +102,7 @@ class MainActivity : Activity() {
         input = findViewById(R.id.input)
         rail = findViewById(R.id.rail)
         anchor = findViewById(R.id.anchor)
+        editor = findViewById(R.id.editor)
 
         store = Store(this)
         apps = Apps(this, store::name) { loaded, pinned ->
@@ -119,6 +121,7 @@ class MainActivity : Activity() {
         rail.onOpen = ::open
         rail.onLetter = ::showLetter
         rail.actions = homeActions
+        wireEditor()
         rail.side = store.railSide
         rail.onSide = { store.railSide = it }
         renderWidgets()
@@ -190,6 +193,7 @@ class MainActivity : Activity() {
 
     private fun closeOverlays() {
         rail.dismiss()
+        editor.finish()
         closeSearch()
     }
 
@@ -552,21 +556,121 @@ class MainActivity : Activity() {
 
     /** Draws home's widgets, dropping any whose app has been uninstalled. */
     private fun renderWidgets() {
+        editor.finish()
         val gone = store.widgets.filter { widgetManager.getAppWidgetInfo(it) == null }
         for (id in gone) {
             widgetHost.deleteAppWidgetId(id)
             store.removeWidget(id)
         }
         widgets.removeAllViews()
-        val width = resources.displayMetrics.widthPixels - home.paddingLeft - home.paddingRight
         for (id in store.widgets) {
             val info = widgetManager.getAppWidgetInfo(id) ?: continue
             val view = widgetHost.createView(this, id, info) as WidgetView
             val height = store.widgetHeight(id).takeIf { it > 0 }?.let(::dp) ?: ownHeight(info)
-            sizeWidget(view, width, height)
-            view.onHold = { showWidgetMenu(id, view, info, height) }
-            widgets.addView(view, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, height))
+            val custom = store.widgetWidth(id).takeIf { it > 0 }?.let(::dp)?.coerceAtMost(columnWidth)
+            sizeWidget(view, custom ?: columnWidth, height)
+            view.onHold = { editWidget(view, info) }
+            view.onDrag = editor::drag
+            describeWidget(view, info, custom ?: columnWidth, height)
+            val params = LinearLayout.LayoutParams(custom ?: LinearLayout.LayoutParams.MATCH_PARENT, height)
+            params.gravity = Gravity.CENTER_HORIZONTAL
+            widgets.addView(view, params)
         }
+    }
+
+    /** The width widgets get unless resized: home's column, between the rails. */
+    private val columnWidth get() = resources.displayMetrics.widthPixels - home.paddingLeft - home.paddingRight
+
+    /** The widgets on home, top to bottom, as views. */
+    private fun widgetViews() = (0 until widgets.childCount).map { widgets.getChildAt(it) }
+
+    /** Holding a widget: an outline with corner handles, to drag it around and resize it. */
+    private fun editWidget(view: WidgetView, info: AppWidgetProviderInfo) {
+        root.swipes = false
+        editor.start(view, limits(info), ::widgetViews)
+    }
+
+    private fun wireEditor() {
+        editor.onResize = { view, width, height ->
+            view.layoutParams = (view.layoutParams as LinearLayout.LayoutParams).apply {
+                this.width = width
+                this.height = height
+            }
+        }
+        editor.onResized = { view ->
+            val params = view.layoutParams
+            val width = if (params.width > 0) params.width else view.width
+            val height = if (params.height > 0) params.height else view.height
+            store.setWidgetHeight(view.appWidgetId, px2dp(height))
+            // The full column is kept as "full", so it follows the screen if that changes.
+            store.setWidgetWidth(view.appWidgetId, if (width >= columnWidth) 0 else px2dp(width))
+            sizeWidget(view, width, height)
+        }
+        editor.onSwap = { view, by ->
+            // Moves the neighbour rather than the dragged widget, so the stroke stays with it.
+            val at = widgets.indexOfChild(view)
+            val other = widgets.getChildAt(at + by)
+            widgets.removeView(other)
+            widgets.addView(other, at)
+        }
+        editor.onMoved = { store.orderWidgets(widgetViews().map { (it as WidgetView).appWidgetId }) }
+        editor.onRemove = { view -> removeWidget(view.appWidgetId) }
+        editor.onFinish = { root.swipes = !searching }
+    }
+
+    /** The sizes [info]'s widget allows, in px, never wider than home's column. */
+    private fun limits(info: AppWidgetProviderInfo): Limits {
+        val s = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val ownMaxWidth = if (s) info.maxResizeWidth else 0
+        return Limits(
+            minWidth = listOf(info.minResizeWidth, info.minWidth).filter { it > 0 }.minOrNull() ?: dp(WIDGET_ROW),
+            maxWidth = if (ownMaxWidth > 0) minOf(ownMaxWidth, columnWidth) else columnWidth,
+            minHeight = smallest(info),
+            maxHeight = largest(info),
+            horizontal = info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0,
+            vertical = info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0,
+        )
+    }
+
+    /**
+     * TalkBack and Switch Access can't drag, so moving, resizing and removing a widget are in
+     * their actions menu on it, a step at a time, each only when it would change something.
+     */
+    private fun describeWidget(view: WidgetView, info: AppWidgetProviderInfo, width: Int, height: Int) {
+        val id = view.appWidgetId
+        val limits = limits(info)
+        val step = dp(WIDGET_ROW / 2)
+        val actions = mutableListOf<HomeAction>()
+        fun add(action: Int, label: String, run: () -> Unit) = actions.add(
+            HomeAction(action, label) {
+                run()
+                renderWidgets()
+            },
+        )
+        val at = store.widgets.indexOf(id)
+        if (at > 0) add(R.id.action_widget_up, "Move up") { store.moveWidget(id, -1) }
+        if (at < store.widgets.lastIndex) add(R.id.action_widget_down, "Move down") { store.moveWidget(id, 1) }
+        if (limits.vertical) {
+            val taller = resized(height, step, limits.minHeight, limits.maxHeight)
+            val shorter = resized(height, -step, limits.minHeight, limits.maxHeight)
+            if (taller > height) add(R.id.action_widget_taller, "Taller") { store.setWidgetHeight(id, px2dp(taller)) }
+            if (shorter <
+                height
+            ) {
+                add(R.id.action_widget_shorter, "Shorter") { store.setWidgetHeight(id, px2dp(shorter)) }
+            }
+        }
+        if (limits.horizontal) {
+            val wider = resized(width, step, limits.minWidth, limits.maxWidth)
+            val narrower = resized(width, -step, limits.minWidth, limits.maxWidth)
+            fun keep(w: Int) = store.setWidgetWidth(id, if (w >= columnWidth) 0 else px2dp(w))
+            if (wider > width) add(R.id.action_widget_wider, "Wider") { keep(wider) }
+            if (narrower < width) add(R.id.action_widget_narrower, "Narrower") { keep(narrower) }
+        }
+        actions.add(HomeAction(R.id.action_widget_remove, "Remove widget") { removeWidget(id) })
+        view.offer(actions)
+        view.isScreenReaderFocusable = true
+        view.contentDescription = "${info.loadLabel(packageManager)} widget"
     }
 
     /** The height a widget asks for, in px, before anyone resizes it. */
@@ -584,36 +688,6 @@ class MainActivity : Activity() {
         val screen = (resources.displayMetrics.heightPixels * MAX_WIDGET_SHARE).toInt()
         val own = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.maxResizeHeight else 0
         return if (own > 0) minOf(own, screen) else screen
-    }
-
-    /**
-     * Holding a widget: move it, make it taller or shorter if it can be resized that way, or remove
-     * it. Each choice only shows when it would change something.
-     */
-    private fun showWidgetMenu(id: Int, view: View, info: AppWidgetProviderInfo, height: Int) {
-        anchor.x = root.width / 2f
-        anchor.y = widgets.y + view.y + view.height / 2f
-        val menu = PopupMenu(this, anchor)
-        fun add(label: String, action: () -> Unit) = menu.menu.add(label).setOnMenuItemClickListener {
-            action()
-            renderWidgets()
-            true
-        }
-        val at = store.widgets.indexOf(id)
-        if (at > 0) add("Move up") { store.moveWidget(id, -1) }
-        if (at < store.widgets.lastIndex) add("Move down") { store.moveWidget(id, 1) }
-        if (info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0) {
-            val step = dp(WIDGET_ROW / 2)
-            val taller = resized(height, step, smallest(info), largest(info))
-            val shorter = resized(height, -step, smallest(info), largest(info))
-            if (taller > height) add("Taller") { store.setWidgetHeight(id, px2dp(taller)) }
-            if (shorter < height) add("Shorter") { store.setWidgetHeight(id, px2dp(shorter)) }
-        }
-        menu.menu.add("Remove widget").setOnMenuItemClickListener {
-            removeWidget(id)
-            true
-        }
-        menu.show()
     }
 
     private fun px2dp(px: Int) = (px / resources.displayMetrics.density).roundToInt()

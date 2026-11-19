@@ -64,4 +64,49 @@ class WidgetsTest {
 
     @Test fun `a widget whose largest is below its smallest stays at its smallest`() =
         assertEquals(100, resized(100, 40, 100, 50))
+
+    private val free =
+        Limits(minWidth = 100, maxWidth = 600, minHeight = 80, maxHeight = 900, horizontal = true, vertical = true)
+
+    @Test fun `dragging the bottom right corner out grows both ways, the width twice since it stays centred`() =
+        assertEquals(Pair(340, 260), cornerResize(Corner.BOTTOM_RIGHT, 300, 200, dx = 20f, dy = 60f, free))
+
+    @Test fun `dragging the top left corner up and left also grows it`() =
+        assertEquals(Pair(340, 260), cornerResize(Corner.TOP_LEFT, 300, 200, dx = -20f, dy = -60f, free))
+
+    @Test fun `dragging a corner inwards shrinks it`() =
+        assertEquals(Pair(260, 140), cornerResize(Corner.BOTTOM_LEFT, 300, 200, dx = 20f, dy = -60f, free))
+
+    @Test fun `a corner drag stops at the widget's smallest and largest`() {
+        assertEquals(Pair(600, 900), cornerResize(Corner.BOTTOM_RIGHT, 300, 200, dx = 500f, dy = 2000f, free))
+        assertEquals(Pair(100, 80), cornerResize(Corner.TOP_RIGHT, 300, 200, dx = -500f, dy = 2000f, free))
+    }
+
+    @Test fun `a widget that only resizes one way keeps the other`() {
+        val tall = free.copy(horizontal = false)
+        assertEquals(Pair(300, 260), cornerResize(Corner.BOTTOM_RIGHT, 300, 200, dx = 20f, dy = 60f, tall))
+        val wide = free.copy(vertical = false)
+        assertEquals(Pair(340, 200), cornerResize(Corner.BOTTOM_RIGHT, 300, 200, dx = 20f, dy = 60f, wide))
+    }
+
+    @Test fun `a finger near a corner grabs it`() {
+        assertEquals(Corner.TOP_LEFT, cornerAt(105f, 52f, 100f, 50f, 400f, 250f, reach = 30f))
+        assertEquals(Corner.BOTTOM_RIGHT, cornerAt(420f, 270f, 100f, 50f, 400f, 250f, reach = 30f))
+    }
+
+    @Test fun `a finger in the middle or far away grabs no corner`() {
+        assertEquals(null, cornerAt(250f, 150f, 100f, 50f, 400f, 250f, reach = 30f))
+        assertEquals(null, cornerAt(500f, 400f, 100f, 50f, 400f, 250f, reach = 30f))
+    }
+
+    @Test fun `a dragged widget swaps once its middle passes a neighbour's`() {
+        assertEquals(-1, swapDirection(center = 140f, aboveCenter = 150f, belowCenter = 500f))
+        assertEquals(1, swapDirection(center = 510f, aboveCenter = 150f, belowCenter = 500f))
+        assertEquals(0, swapDirection(center = 300f, aboveCenter = 150f, belowCenter = 500f))
+    }
+
+    @Test fun `the first and last widgets have nothing to swap with on their open side`() {
+        assertEquals(0, swapDirection(center = -100f, aboveCenter = null, belowCenter = 500f))
+        assertEquals(0, swapDirection(center = 900f, aboveCenter = 150f, belowCenter = null))
+    }
 }

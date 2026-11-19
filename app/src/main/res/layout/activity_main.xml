@@ -93,6 +93,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Over everything while a widget is being moved or resized. -->
+    <com.kayf.risco.WidgetEditor
+        android:id="@+id/editor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <View
         android:id="@+id/anchor"
         android:layout_width="1dp"

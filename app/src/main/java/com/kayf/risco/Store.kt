@@ -71,7 +71,15 @@ class Store(context: Context) {
     fun removeWidget(id: Int) {
         widgets -= id
         saveWidgets()
-        prefs.edit().remove("wh:$id").apply()
+        prefs.edit().remove("wh:$id").remove("ww:$id").apply()
+    }
+
+    /** Puts the widgets in [ids]' order, as left after dragging one. */
+    fun orderWidgets(ids: List<Int>) {
+        if (ids.toSet() != widgets.toSet()) return
+        widgets.clear()
+        widgets += ids
+        saveWidgets()
     }
 
     /** Moves a widget [by] places, up for negative. */
@@ -86,6 +94,11 @@ class Store(context: Context) {
     fun widgetHeight(id: Int) = prefs.getInt("wh:$id", 0)
 
     fun setWidgetHeight(id: Int, dp: Int) = prefs.edit().putInt("wh:$id", dp).apply()
+
+    /** The width someone gave a widget, in dp, or 0 for home's full column. */
+    fun widgetWidth(id: Int) = prefs.getInt("ww:$id", 0)
+
+    fun setWidgetWidth(id: Int, dp: Int) = prefs.edit().putInt("ww:$id", dp).apply()
 
     /** The name someone gave an app or shortcut, or null for its own. */
     fun name(key: String): String? = prefs.getString("name:$key", null)
