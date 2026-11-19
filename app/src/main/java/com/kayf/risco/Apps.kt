@@ -4,31 +4,55 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.LauncherApps.ShortcutQuery
+import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
+import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
+import android.util.Log
 import kotlin.concurrent.thread
 
-/** [icon] is only loaded while icons are on. */
+/** Something home and search can list and open. [icon] is only loaded while icons are on. */
+sealed interface Item {
+    val label: String
+    val key: String
+    val icon: Bitmap?
+    val folded: String
+}
+
 class App(
-    val label: String,
+    override val label: String,
     val component: ComponentName,
     val user: UserHandle,
-    val key: String,
-    val icon: Bitmap? = null,
-) {
-    val folded = Fuzzy.fold(label)
+    override val key: String,
+    override val icon: Bitmap? = null,
+) : Item {
+    override val folded = Fuzzy.fold(label)
     val letter = Fuzzy.letterIndex(label)
 }
 
-/** The installed apps. Reading labels is slow, so it happens off the main thread. */
-class Apps(private val context: Context, private val onChange: (List<App>) -> Unit) {
+/** A shortcut pinned to home, such as a website from Chrome's "Add to home screen". */
+class Shortcut(
+    override val label: String,
+    val info: ShortcutInfo,
+    override val key: String,
+    override val icon: Bitmap? = null,
+) : Item {
+    override val folded = Fuzzy.fold(label)
+}
+
+/**
+ * The installed apps, and the shortcuts pinned to home. Reading labels is slow, so it happens off
+ * the main thread.
+ */
+class Apps(private val context: Context, private val onChange: (List<App>, List<Shortcut>) -> Unit) {
     private val launcher = context.getSystemService(LauncherApps::class.java)
     private val users = context.getSystemService(UserManager::class.java)
     private val main = Handler(Looper.getMainLooper())
@@ -54,6 +78,8 @@ class Apps(private val context: Context, private val onChange: (List<App>) -> Un
         override fun onPackageChanged(packageName: String, user: UserHandle) = changed()
         override fun onPackagesAvailable(packages: Array<String>, user: UserHandle, replacing: Boolean) = changed()
         override fun onPackagesUnavailable(packages: Array<String>, user: UserHandle, replacing: Boolean) = changed()
+        override fun onShortcutsChanged(packageName: String, shortcuts: List<ShortcutInfo>, user: UserHandle) =
+            changed()
     }
 
     fun start() {
@@ -74,6 +100,44 @@ class Apps(private val context: Context, private val onChange: (List<App>) -> Un
 
     fun details(app: App) = launcher.startAppDetailsActivity(app.component, app.user, null, null)
 
+    fun launch(shortcut: ShortcutInfo) = launcher.startShortcut(shortcut, null, null)
+
+    /**
+     * What holding [app] offers, such as "New message". Android only shows shortcuts to the
+     * default launcher, so there are none while risco is opened as an ordinary app.
+     */
+    fun shortcutsFor(app: App): List<ShortcutInfo> {
+        val query = ShortcutQuery()
+            .setPackage(app.component.packageName)
+            .setActivity(app.component)
+            .setQueryFlags(ShortcutQuery.FLAG_MATCH_DYNAMIC or ShortcutQuery.FLAG_MATCH_MANIFEST)
+        val all = shortcuts(query, app.user).filter { it.isEnabled }
+        return menuShortcuts(all, { it.isDeclaredInManifest }, { it.rank })
+    }
+
+    /** Takes [shortcut] off home. Android keeps a launcher's pins, so this tells it which to keep. */
+    fun unpin(shortcut: Shortcut) {
+        val info = shortcut.info
+        val query = ShortcutQuery().setPackage(info.`package`).setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED)
+        val keep = shortcuts(query, info.userHandle).map { it.id }.filter { it != info.id }
+        runCatching { launcher.pinShortcuts(info.`package`, keep, info.userHandle) }
+            .onFailure { Log.w(TAG, "can't unpin ${shortcut.key}", it) }
+    }
+
+    /**
+     * Asking for shortcuts throws when risco isn't the default launcher, and while a work profile
+     * is off, so either just means none.
+     */
+    private fun shortcuts(query: ShortcutQuery, user: UserHandle): List<ShortcutInfo> = try {
+        if (launcher.hasShortcutHostPermission()) launcher.getShortcuts(query, user).orEmpty() else emptyList()
+    } catch (e: RuntimeException) {
+        Log.w(TAG, "can't read shortcuts", e)
+        emptyList()
+    }
+
+    private fun shortcutLabel(info: ShortcutInfo): String =
+        (info.shortLabel?.takeIf { it.isNotBlank() } ?: info.longLabel ?: "").toString().trim()
+
     private fun load() {
         val generation = ++latest
         val withIcons = icons
@@ -88,13 +152,31 @@ class Apps(private val context: Context, private val onChange: (List<App>) -> Un
                         App(label, it.componentName, user, key, if (withIcons) icon(it) else null)
                     }
             }.sortedBy { it.folded }
-            main.post { if (generation == latest) onChange(loaded) }
+            val pinned = launcher.profiles.flatMap { user ->
+                val serial = users.getSerialNumberForUser(user)
+                shortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user)
+                    .filter { it.isEnabled }
+                    .map { info ->
+                        val label = shortcutLabel(info) + if (user == me) "" else " [work]"
+                        val icon = if (withIcons) {
+                            grey(
+                                launcher.getShortcutIconDrawable(info, metrics.densityDpi),
+                            )
+                        } else {
+                            null
+                        }
+                        Shortcut(label, info, shortcutKey(info.`package`, info.id, serial), icon)
+                    }
+            }
+            main.post { if (generation == latest) onChange(loaded, pinned) }
         }
     }
 
     /** In grey, so the icons sit with the white names instead of competing with them. */
-    private fun icon(info: LauncherActivityInfo): Bitmap? = runCatching {
-        val drawable = info.getIcon(metrics.densityDpi).mutate()
+    private fun icon(info: LauncherActivityInfo): Bitmap? = grey(info.getIcon(metrics.densityDpi))
+
+    private fun grey(icon: Drawable?): Bitmap? = runCatching {
+        val drawable = icon!!.mutate()
         drawable.colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
         val bitmap = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888)
         drawable.setBounds(0, 0, iconSize, iconSize)
@@ -102,3 +184,5 @@ class Apps(private val context: Context, private val onChange: (List<App>) -> Un
         bitmap
     }.getOrNull()
 }
+
+private const val TAG = "risco"

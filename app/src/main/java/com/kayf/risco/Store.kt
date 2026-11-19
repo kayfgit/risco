@@ -37,6 +37,15 @@ class Store(context: Context) {
         savePins()
     }
 
+    /** Adds pins made elsewhere, such as a shortcut another app pinned, to the end of home. */
+    fun pinNew(keys: List<String>) {
+        val next = withNewPins(pins, keys)
+        if (next.size == pins.size) return
+        pins.clear()
+        pins += next
+        savePins()
+    }
+
     fun unpin(key: String) {
         pins -= key
         savePins()

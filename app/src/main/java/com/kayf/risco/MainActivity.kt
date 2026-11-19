@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Typeface
@@ -27,6 +28,7 @@ import android.util.Log
 import android.util.SizeF
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.Menu
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
@@ -38,7 +40,7 @@ import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : Activity() {
-    private class Hit(val text: String, val app: App?, val icon: Bitmap? = null, val run: () -> Unit)
+    private class Hit(val text: String, val item: Item?, val icon: Bitmap? = null, val run: () -> Unit)
 
     private lateinit var store: Store
     private lateinit var apps: Apps
@@ -58,6 +60,7 @@ class MainActivity : Activity() {
 
     private var all: List<App> = emptyList()
     private var visible: List<App> = emptyList()
+    private var shortcuts: List<Shortcut> = emptyList()
     private var hits: List<Hit> = emptyList()
     private var searching = false
     private var keyboardWasUp = false
@@ -88,8 +91,10 @@ class MainActivity : Activity() {
         anchor = findViewById(R.id.anchor)
 
         store = Store(this)
-        apps = Apps(this) { loaded ->
+        apps = Apps(this) { loaded, pinned ->
             all = loaded
+            shortcuts = pinned
+            store.pinNew(pinned.map { it.key })
             refresh()
         }
         apps.icons = store.icons
@@ -181,15 +186,18 @@ class MainActivity : Activity() {
         if (searching) renderHits()
     }
 
+    /** What search finds: the apps, and the shortcuts pinned to home. */
+    private val searchable get() = visible + shortcuts
+
     private fun renderPins() {
-        val byKey = visible.associateBy { it.key }
+        val byKey = searchable.associateBy { it.key }
         pins.removeAllViews()
         for (key in store.pins) {
-            val app = byKey[key] ?: continue
-            val view = row(app.label, on = false, icon = app.icon)
-            view.setOnClickListener { open(app) }
+            val item = byKey[key] ?: continue
+            val view = row(item.label, on = false, icon = item.icon)
+            view.setOnClickListener { open(item) }
             view.setOnLongClickListener {
-                showMenu(app, view.x, root.height / 2f)
+                showMenu(item, view.x, root.height / 2f)
                 true
             }
             pins.addView(view)
@@ -197,19 +205,33 @@ class MainActivity : Activity() {
         hint.visibility = if (store.welcomed) View.GONE else View.VISIBLE
     }
 
-    private fun open(app: App) {
-        store.launched(app.key)
+    private fun open(item: Item) {
+        store.launched(item.key)
         if (!store.welcomed) {
             store.welcomed = true
             hint.visibility = View.GONE
         }
-        // The app can vanish between the list being drawn and the finger lifting.
+        // The app can vanish between the list being drawn and the finger lifting, and a shortcut
+        // can stop working while its work profile is off.
         try {
-            apps.launch(app)
+            when (item) {
+                is App -> apps.launch(item)
+                is Shortcut -> apps.launch(item.info)
+            }
         } catch (e: RuntimeException) {
-            Log.w(TAG, "can't open ${app.key}", e)
-            Toast.makeText(this, "can't open ${app.label}", Toast.LENGTH_SHORT).show()
+            Log.w(TAG, "can't open ${item.key}", e)
+            Toast.makeText(this, "can't open ${item.label}", Toast.LENGTH_SHORT).show()
             apps.changed()
+        }
+    }
+
+    /** One of an app's own shortcuts, from its hold menu. */
+    private fun open(shortcut: ShortcutInfo) {
+        try {
+            apps.launch(shortcut)
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "can't open shortcut ${shortcut.id}", e)
+            Toast.makeText(this, "can't open ${shortcut.shortLabel}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -256,9 +278,9 @@ class MainActivity : Activity() {
         hits.asReversed().forEachIndexed { i, hit ->
             val view = row(hit.text, on = i == hits.lastIndex, icon = hit.icon)
             view.setOnClickListener { hit.run() }
-            hit.app?.let { app ->
+            hit.item?.let { item ->
                 view.setOnLongClickListener {
-                    showMenu(app, root.width / 2f, root.height / 2f)
+                    showMenu(item, root.width / 2f, root.height / 2f)
                     true
                 }
             }
@@ -270,9 +292,9 @@ class MainActivity : Activity() {
     // Commands are typed, not translated, so building ":pin " in code is fine.
     @SuppressLint("SetTextI18n")
     private fun hitsFor(text: String): List<Hit> = when (val parsed = parseInput(text)) {
-        is Input.Search -> ranked(visible, parsed.query).map { app ->
-            Hit(app.label, app, app.icon) {
-                open(app)
+        is Input.Search -> ranked(searchable, parsed.query).map { item ->
+            Hit(item.label, item, item.icon) {
+                open(item)
                 closeSearch()
             }
         }
@@ -301,19 +323,19 @@ class MainActivity : Activity() {
                     addWidget(choice.info)
                 }
             }
-            else -> ranked(pool(parsed.command.arg), parsed.argument).map { app ->
-                Hit(":${parsed.command.word} ${app.label}", app) { run(parsed.command, app) }
+            else -> ranked(pool(parsed.command.arg), parsed.argument).map { item ->
+                Hit(":${parsed.command.word} ${item.label}", item) { run(parsed.command, item) }
             }
         }
     }
 
-    private fun pool(arg: Arg) = when (arg) {
-        Arg.PINNED -> visible.filter { it.key in store.pins }
+    private fun pool(arg: Arg): List<Item> = when (arg) {
+        Arg.PINNED -> searchable.filter { it.key in store.pins }
         Arg.HIDDEN -> all.filter { it.key in store.hidden }
         else -> visible
     }
 
-    private fun ranked(pool: List<App>, query: String) =
+    private fun <T : Item> ranked(pool: List<T>, query: String) =
         rank(pool, query, { it.folded }, { store.launches(it.key) })
 
     private fun <T> rank(pool: List<T>, query: String, folded: (T) -> String, uses: (T) -> Int): List<T> {
@@ -351,10 +373,12 @@ class MainActivity : Activity() {
             .also { widgetChoices = it }
     }
 
-    private fun run(command: Command, app: App?, choice: String? = null) {
+    /** [item] is set for commands that take an app; only `:unpin` also takes a shortcut. */
+    private fun run(command: Command, item: Item?, choice: String? = null) {
+        val app = item as? App
         when (command) {
             Command.PIN -> store.pin(app!!.key)
-            Command.UNPIN -> store.unpin(app!!.key)
+            Command.UNPIN -> unpin(item!!)
             Command.HIDE -> store.hide(app!!.key)
             Command.UNHIDE -> store.unhide(app!!.key)
             Command.INFO -> apps.details(app!!)
@@ -369,6 +393,11 @@ class MainActivity : Activity() {
         }
         closeSearch()
         refresh()
+    }
+
+    private fun unpin(item: Item) {
+        if (item is Shortcut) apps.unpin(item)
+        store.unpin(item.key)
     }
 
     private fun uninstall(app: App) {
@@ -532,27 +561,33 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun showMenu(app: App, x: Float, y: Float) {
+    /** What holding an app or a pinned shortcut opens. An app's own shortcuts come first, above a line. */
+    private fun showMenu(item: Item, x: Float, y: Float) {
         anchor.x = x
         anchor.y = y
         val menu = PopupMenu(this, anchor)
-        val pinned = app.key in store.pins
-        val pinCommand = if (pinned) Command.UNPIN else Command.PIN
-        menu.menu.add(pinCommand.word).setOnMenuItemClickListener {
-            run(pinCommand, app)
-            true
-        }
-        menu.menu.add(Command.HIDE.word).setOnMenuItemClickListener {
-            run(Command.HIDE, app)
-            true
-        }
-        menu.menu.add(Command.INFO.word).setOnMenuItemClickListener {
-            run(Command.INFO, app)
-            true
-        }
-        menu.menu.add(Command.RM.word).setOnMenuItemClickListener {
-            run(Command.RM, app)
-            true
+        menu.menu.setGroupDividerEnabled(true)
+        fun add(command: Command) = menu.menu.add(ACTIONS, Menu.NONE, Menu.NONE, command.word)
+            .setOnMenuItemClickListener {
+                run(command, item)
+                true
+            }
+        when (item) {
+            is Shortcut -> add(Command.UNPIN)
+            is App -> {
+                for (shortcut in apps.shortcutsFor(item)) {
+                    val label = shortcut.longLabel?.takeIf { it.isNotBlank() } ?: shortcut.shortLabel
+                    menu.menu.add(SHORTCUTS, Menu.NONE, Menu.NONE, label).setOnMenuItemClickListener {
+                        closeSearch()
+                        open(shortcut)
+                        true
+                    }
+                }
+                add(if (item.key in store.pins) Command.UNPIN else Command.PIN)
+                add(Command.HIDE)
+                add(Command.INFO)
+                add(Command.RM)
+            }
         }
         menu.show()
     }
@@ -599,6 +634,10 @@ class MainActivity : Activity() {
         const val MAX_HITS = 20
         const val REQUEST_BIND = 1
         const val REQUEST_CONFIGURE = 2
+
+        /** Menu groups, so a line separates an app's shortcuts from what risco can do with it. */
+        const val SHORTCUTS = 1
+        const val ACTIONS = 2
 
         /** dp per row a widget asks for, about what a stock launcher gives one. */
         const val WIDGET_ROW = 80
