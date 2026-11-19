@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The README opens with a short recording of risco in use, made by the scripts in `docs/demo`.
+
 ## 0.2.0 - 2026-11-19
 
 **TL;DR**
