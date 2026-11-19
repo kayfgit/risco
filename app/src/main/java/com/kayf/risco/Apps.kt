@@ -78,6 +78,9 @@ class Apps(
     private val reload = Runnable { load() }
     private val metrics = context.resources.displayMetrics
 
+    /** Marks a work profile's apps, as " [work]" in English. */
+    private val workSuffix = context.getString(R.string.work_suffix)
+
     /**
      * The rail's letters: the phone's languages unless `:alphabet` picked one. A language change
      * restarts home, so the phone's languages are read once.
@@ -186,7 +189,7 @@ class Apps(
                 launcher.getActivityList(null, user)
                     .filter { it.applicationInfo.packageName != context.packageName }
                     .map {
-                        val work = if (user == me) "" else " [work]"
+                        val work = if (user == me) "" else workSuffix
                         val original = it.label.toString().trim()
                         val key = "${it.componentName.flattenToShortString()}@${users.getSerialNumberForUser(user)}"
                         val label = displayLabel(original, names(key)) + work
@@ -199,7 +202,7 @@ class Apps(
                 shortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user)
                     .filter { it.isEnabled }
                     .map { info ->
-                        val work = if (user == me) "" else " [work]"
+                        val work = if (user == me) "" else workSuffix
                         val original = shortcutLabel(info)
                         val key = shortcutKey(info.`package`, info.id, serial)
                         val icon = if (withIcons) shortcutIcon(info) else null

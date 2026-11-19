@@ -61,6 +61,8 @@ class WidgetEditor(context: Context, attrs: AttributeSet?) : View(context, attrs
         typeface = Typeface.DEFAULT_BOLD
     }
 
+    private val removeLabel = resources.getString(R.string.remove)
+
     private var target: WidgetView? = null
     private var limits = Limits(0, 0, 0, 0, horizontal = false, vertical = false)
     private var widgets: () -> List<View> = { emptyList() }
@@ -204,7 +206,7 @@ class WidgetEditor(context: Context, attrs: AttributeSet?) : View(context, attrs
         val remove = chipBox(box)
         canvas.drawRoundRect(remove, chipHeight / 2, chipHeight / 2, chip)
         val textY = remove.centerY() - (chipText.ascent() + chipText.descent()) / 2
-        canvas.drawText("Remove", remove.centerX(), textY, chipText)
+        canvas.drawText(removeLabel, remove.centerX(), textY, chipText)
         // Follows the widget while it lays itself out at a new size.
         if (corner != null || moving) postInvalidateOnAnimation()
     }

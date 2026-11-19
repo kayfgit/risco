@@ -125,6 +125,4 @@ class AlphabetTest {
         assertEquals("Λ", a.under("Λεξικό"))
         assertEquals("M", a.under("Maps"))
     }
-
-    @Test fun `how TalkBack reads hash`() = assertEquals("Other, 1 app", letterDescription(OTHER, 1))
 }

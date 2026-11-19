@@ -75,9 +75,14 @@ class MainActivity : Activity() {
 
     /** What home does on a swipe or a hold, for TalkBack and Switch Access, which can do neither there. */
     private val homeActions = listOf(
-        HomeAction(R.id.action_search, "Search apps", ::openSearch),
-        HomeAction(R.id.action_notifications, "Notifications", ::expandShade),
-        HomeAction(R.id.action_menu, "Wallpaper and widgets") { showHomeMenu(root.width / 2f, root.height / 2f) },
+        HomeAction(R.id.action_search, getString(R.string.action_search), ::openSearch),
+        HomeAction(R.id.action_notifications, getString(R.string.action_notifications), ::expandShade),
+        HomeAction(R.id.action_menu, getString(R.string.action_wallpaper_widgets)) {
+            showHomeMenu(
+                root.width / 2f,
+                root.height / 2f,
+            )
+        },
     )
 
     /** A widget id between asking to add it and it landing on home. */
@@ -240,7 +245,7 @@ class MainActivity : Activity() {
             }
         } catch (e: RuntimeException) {
             Log.w(TAG, "can't open ${item.key}", e)
-            Toast.makeText(this, "Can't open ${item.label}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.cant_open, item.label), Toast.LENGTH_SHORT).show()
             apps.changed()
         }
     }
@@ -251,7 +256,7 @@ class MainActivity : Activity() {
             apps.launch(shortcut)
         } catch (e: RuntimeException) {
             Log.w(TAG, "can't open shortcut ${shortcut.id}", e)
-            Toast.makeText(this, "Can't open ${shortcut.shortLabel}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.cant_open, shortcut.shortLabel), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -319,7 +324,7 @@ class MainActivity : Activity() {
             }
         }
         is Input.Partial -> parsed.matches.map { command ->
-            Hit(":${command.word}  ${command.help}", null) {
+            Hit(":${command.word}  ${getString(command.help)}", null) {
                 if (command.arg == Arg.NONE) {
                     run(command, null)
                 } else {
@@ -330,7 +335,7 @@ class MainActivity : Activity() {
         }
         is Input.Full -> when (parsed.command.arg) {
             Arg.NONE -> listOf(
-                Hit(":${parsed.command.word}  ${parsed.command.help}", null) {
+                Hit(":${parsed.command.word}  ${getString(parsed.command.help)}", null) {
                     run(parsed.command, null)
                 },
             )
@@ -413,7 +418,7 @@ class MainActivity : Activity() {
      */
     private fun rename(item: Item) {
         val custom = store.name(item.key)
-        val own = item.original.removeSuffix(" [work]")
+        val own = item.original.removeSuffix(getString(R.string.work_suffix))
         val field = EditText(this).apply {
             setText(custom ?: own)
             hint = own
@@ -430,11 +435,11 @@ class MainActivity : Activity() {
             apps.reload()
         }
         val builder = AlertDialog.Builder(this)
-            .setTitle("Rename")
+            .setTitle(R.string.rename)
             .setView(box)
-            .setPositiveButton("Save") { _, _ -> save(field.text.toString()) }
-            .setNegativeButton("Cancel", null)
-        if (custom != null) builder.setNeutralButton("Reset") { _, _ -> save(null) }
+            .setPositiveButton(R.string.save) { _, _ -> save(field.text.toString()) }
+            .setNegativeButton(R.string.cancel, null)
+        if (custom != null) builder.setNeutralButton(R.string.reset) { _, _ -> save(null) }
         val dialog = builder.create()
         field.setOnEditorActionListener { _, _, _ ->
             save(field.text.toString())
@@ -474,7 +479,7 @@ class MainActivity : Activity() {
             startActivity(Intent(Intent.ACTION_SET_WALLPAPER))
         } catch (e: ActivityNotFoundException) {
             Log.w(TAG, "no wallpaper picker", e)
-            Toast.makeText(this, "No wallpaper app found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.no_wallpaper_app, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -483,19 +488,21 @@ class MainActivity : Activity() {
         anchor.x = x
         anchor.y = y
         val menu = PopupMenu(this, anchor)
-        menu.menu.add("Wallpaper").setOnMenuItemClickListener {
+        menu.menu.add(R.string.menu_wallpaper).setOnMenuItemClickListener {
             openWallpaper()
             true
         }
-        menu.menu.add("Widgets").setOnMenuItemClickListener {
+        menu.menu.add(R.string.menu_widgets).setOnMenuItemClickListener {
             openSearch(":${Command.WIDGET.word} ")
             true
         }
-        menu.menu.add(if (store.icons) "Hide icons" else "Show icons").setOnMenuItemClickListener {
+        menu.menu.add(
+            if (store.icons) R.string.menu_hide_icons else R.string.menu_show_icons,
+        ).setOnMenuItemClickListener {
             setIcons(!store.icons)
             true
         }
-        menu.menu.add("Commands").setOnMenuItemClickListener {
+        menu.menu.add(R.string.menu_commands).setOnMenuItemClickListener {
             openSearch(":")
             true
         }
@@ -656,36 +663,40 @@ class MainActivity : Activity() {
         val limits = limits(info)
         val step = dp(WIDGET_ROW / 2)
         val actions = mutableListOf<HomeAction>()
-        fun add(action: Int, label: String, run: () -> Unit) = actions.add(
-            HomeAction(action, label) {
+        fun add(action: Int, label: Int, run: () -> Unit) = actions.add(
+            HomeAction(action, getString(label)) {
                 run()
                 renderWidgets()
             },
         )
         val at = store.widgets.indexOf(id)
-        if (at > 0) add(R.id.action_widget_up, "Move up") { store.moveWidget(id, -1) }
-        if (at < store.widgets.lastIndex) add(R.id.action_widget_down, "Move down") { store.moveWidget(id, 1) }
+        if (at > 0) add(R.id.action_widget_up, R.string.widget_up) { store.moveWidget(id, -1) }
+        if (at < store.widgets.lastIndex) add(R.id.action_widget_down, R.string.widget_down) { store.moveWidget(id, 1) }
         if (limits.vertical) {
             val taller = resized(height, step, limits.minHeight, limits.maxHeight)
             val shorter = resized(height, -step, limits.minHeight, limits.maxHeight)
-            if (taller > height) add(R.id.action_widget_taller, "Taller") { store.setWidgetHeight(id, px2dp(taller)) }
+            if (taller >
+                height
+            ) {
+                add(R.id.action_widget_taller, R.string.widget_taller) { store.setWidgetHeight(id, px2dp(taller)) }
+            }
             if (shorter <
                 height
             ) {
-                add(R.id.action_widget_shorter, "Shorter") { store.setWidgetHeight(id, px2dp(shorter)) }
+                add(R.id.action_widget_shorter, R.string.widget_shorter) { store.setWidgetHeight(id, px2dp(shorter)) }
             }
         }
         if (limits.horizontal) {
             val wider = resized(width, step, limits.minWidth, limits.maxWidth)
             val narrower = resized(width, -step, limits.minWidth, limits.maxWidth)
             fun keep(w: Int) = store.setWidgetWidth(id, if (w >= columnWidth) 0 else px2dp(w))
-            if (wider > width) add(R.id.action_widget_wider, "Wider") { keep(wider) }
-            if (narrower < width) add(R.id.action_widget_narrower, "Narrower") { keep(narrower) }
+            if (wider > width) add(R.id.action_widget_wider, R.string.widget_wider) { keep(wider) }
+            if (narrower < width) add(R.id.action_widget_narrower, R.string.widget_narrower) { keep(narrower) }
         }
-        actions.add(HomeAction(R.id.action_widget_remove, "Remove widget") { removeWidget(id) })
+        actions.add(HomeAction(R.id.action_widget_remove, getString(R.string.widget_remove)) { removeWidget(id) })
         view.offer(actions)
         view.isScreenReaderFocusable = true
-        view.contentDescription = "${info.loadLabel(packageManager)} widget"
+        view.contentDescription = getString(R.string.widget_description, info.loadLabel(packageManager))
     }
 
     /** The height a widget asks for, in px, before anyone resizes it. */
@@ -744,15 +755,15 @@ class MainActivity : Activity() {
         anchor.y = y
         val menu = PopupMenu(this, anchor)
         menu.menu.setGroupDividerEnabled(true)
-        fun add(command: Command, label: String) = menu.menu.add(ACTIONS, Menu.NONE, Menu.NONE, label)
+        fun add(command: Command, label: Int) = menu.menu.add(ACTIONS, Menu.NONE, Menu.NONE, label)
             .setOnMenuItemClickListener {
                 run(command, item)
                 true
             }
         when (item) {
             is Shortcut -> {
-                add(Command.RENAME, "Rename")
-                add(Command.UNPIN, "Remove from home")
+                add(Command.RENAME, R.string.rename)
+                add(Command.UNPIN, R.string.remove_from_home)
             }
             is App -> {
                 for (shortcut in apps.shortcutsFor(item)) {
@@ -763,11 +774,17 @@ class MainActivity : Activity() {
                         true
                     }
                 }
-                if (item.key in store.pins) add(Command.UNPIN, "Remove from home") else add(Command.PIN, "Add to home")
-                add(Command.RENAME, "Rename")
-                add(Command.HIDE, "Hide")
-                add(Command.INFO, "App info")
-                add(Command.RM, "Uninstall")
+                if (item.key in
+                    store.pins
+                ) {
+                    add(Command.UNPIN, R.string.remove_from_home)
+                } else {
+                    add(Command.PIN, R.string.add_to_home)
+                }
+                add(Command.RENAME, R.string.rename)
+                add(Command.HIDE, R.string.hide)
+                add(Command.INFO, R.string.app_info)
+                add(Command.RM, R.string.uninstall)
             }
         }
         menu.show()
