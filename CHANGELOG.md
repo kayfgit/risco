@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Holding an app shows its shortcuts, like "New message" or "New tab", above the other choices.
+  Up to four, the app's main ones first. Needs risco to be the default launcher.
+- Other apps can add shortcuts to home, such as a website from Chrome's "Add to home screen" or a
+  chat from a messaging app. risco asks "Add to home screen?" first. Added shortcuts sit with your
+  pinned apps and show up in search; hold one, or use `:unpin`, to remove it.
+- Works with TalkBack and Switch Access. Each rail letter can be found by touch or by swiping, is
+  read as "G, 10 apps", and opens a menu of its apps. Search, notifications, and wallpaper and
+  widgets are in the actions menu, since TalkBack takes swipes and holds for itself.
+- Menus and messages use plain, capitalised words: holding an app offers Add to home, Hide, App
+  info and Uninstall instead of `pin`, `hide`, `info` and `rm`. Typed commands haven't changed.
+
 - risco is now licensed under the GNU GPL v3 or later (GPL-3.0-or-later), copyright Kayf.
 
 - Hold empty space on home for a menu like a stock launcher's: wallpaper, widgets, icons and
