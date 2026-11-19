@@ -42,6 +42,7 @@ import android.widget.PopupMenu
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
     private class Hit(val text: String, val item: Item?, val icon: Bitmap? = null, val run: () -> Unit)
@@ -561,32 +562,61 @@ class MainActivity : Activity() {
         for (id in store.widgets) {
             val info = widgetManager.getAppWidgetInfo(id) ?: continue
             val view = widgetHost.createView(this, id, info) as WidgetView
-            val targetRows = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.targetCellHeight else 0
-            val height = widgetHeight(
-                info.minHeight,
-                info.minResizeHeight,
-                targetRows,
-                dp(WIDGET_ROW),
-                dp(
-                    WIDGET_ROW * 2,
-                ),
-            )
+            val height = store.widgetHeight(id).takeIf { it > 0 }?.let(::dp) ?: ownHeight(info)
             sizeWidget(view, width, height)
-            view.onHold = { showWidgetMenu(id, view) }
+            view.onHold = { showWidgetMenu(id, view, info, height) }
             widgets.addView(view, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, height))
         }
     }
 
-    private fun showWidgetMenu(id: Int, view: View) {
+    /** The height a widget asks for, in px, before anyone resizes it. */
+    private fun ownHeight(info: AppWidgetProviderInfo): Int {
+        val targetRows = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.targetCellHeight else 0
+        return widgetHeight(info.minHeight, info.minResizeHeight, targetRows, dp(WIDGET_ROW), dp(WIDGET_ROW * 2))
+    }
+
+    /** The smallest a widget says it can be, in px, or a row if it says nothing. */
+    private fun smallest(info: AppWidgetProviderInfo): Int =
+        listOf(info.minResizeHeight, info.minHeight).filter { it > 0 }.minOrNull() ?: dp(WIDGET_ROW)
+
+    /** The largest a widget says it can be, in px, and never more than most of the screen. */
+    private fun largest(info: AppWidgetProviderInfo): Int {
+        val screen = (resources.displayMetrics.heightPixels * MAX_WIDGET_SHARE).toInt()
+        val own = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) info.maxResizeHeight else 0
+        return if (own > 0) minOf(own, screen) else screen
+    }
+
+    /**
+     * Holding a widget: move it, make it taller or shorter if it can be resized that way, or remove
+     * it. Each choice only shows when it would change something.
+     */
+    private fun showWidgetMenu(id: Int, view: View, info: AppWidgetProviderInfo, height: Int) {
         anchor.x = root.width / 2f
         anchor.y = widgets.y + view.y + view.height / 2f
         val menu = PopupMenu(this, anchor)
+        fun add(label: String, action: () -> Unit) = menu.menu.add(label).setOnMenuItemClickListener {
+            action()
+            renderWidgets()
+            true
+        }
+        val at = store.widgets.indexOf(id)
+        if (at > 0) add("Move up") { store.moveWidget(id, -1) }
+        if (at < store.widgets.lastIndex) add("Move down") { store.moveWidget(id, 1) }
+        if (info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0) {
+            val step = dp(WIDGET_ROW / 2)
+            val taller = resized(height, step, smallest(info), largest(info))
+            val shorter = resized(height, -step, smallest(info), largest(info))
+            if (taller > height) add("Taller") { store.setWidgetHeight(id, px2dp(taller)) }
+            if (shorter < height) add("Shorter") { store.setWidgetHeight(id, px2dp(shorter)) }
+        }
         menu.menu.add("Remove widget").setOnMenuItemClickListener {
             removeWidget(id)
             true
         }
         menu.show()
     }
+
+    private fun px2dp(px: Int) = (px / resources.displayMetrics.density).roundToInt()
 
     /** Tells the widget the space it has, in dp, so it can lay itself out for it. */
     private fun sizeWidget(view: WidgetView, width: Int, height: Int) {
@@ -701,7 +731,10 @@ class MainActivity : Activity() {
         const val SHORTCUTS = 1
         const val ACTIONS = 2
 
-        /** dp per row a widget asks for, about what a stock launcher gives one. */
+        /** dp per row a widget asks for, about what a stock launcher gives one. Resizing goes half a row at a time. */
         const val WIDGET_ROW = 80
+
+        /** The most of the screen's height one widget can grow to, so home's pins stay in reach. */
+        const val MAX_WIDGET_SHARE = 0.6f
     }
 }

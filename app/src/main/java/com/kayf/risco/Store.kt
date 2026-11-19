@@ -71,7 +71,21 @@ class Store(context: Context) {
     fun removeWidget(id: Int) {
         widgets -= id
         saveWidgets()
+        prefs.edit().remove("wh:$id").apply()
     }
+
+    /** Moves a widget [by] places, up for negative. */
+    fun moveWidget(id: Int, by: Int) {
+        val next = moved(widgets, id, by)
+        widgets.clear()
+        widgets += next
+        saveWidgets()
+    }
+
+    /** The height someone gave a widget, in dp so it survives a display size change, or 0 for its own. */
+    fun widgetHeight(id: Int) = prefs.getInt("wh:$id", 0)
+
+    fun setWidgetHeight(id: Int, dp: Int) = prefs.edit().putInt("wh:$id", dp).apply()
 
     /** The name someone gave an app or shortcut, or null for its own. */
     fun name(key: String): String? = prefs.getString("name:$key", null)

@@ -37,4 +37,31 @@ class WidgetsTest {
 
     @Test fun `a widget that says nothing about its size gets the fallback`() =
         assertEquals(160, widgetHeight(0, 0, 0, 80, 160))
+
+    @Test fun `moving a widget up swaps it with the one above`() =
+        assertEquals(listOf(1, 3, 2), moved(listOf(1, 2, 3), 3, -1))
+
+    @Test fun `moving a widget down swaps it with the one below`() =
+        assertEquals(listOf(2, 1, 3), moved(listOf(1, 2, 3), 1, 1))
+
+    @Test fun `a widget at the top can't move further up, nor the bottom one down`() {
+        assertEquals(listOf(1, 2, 3), moved(listOf(1, 2, 3), 1, -1))
+        assertEquals(listOf(1, 2, 3), moved(listOf(1, 2, 3), 3, 1))
+    }
+
+    @Test fun `moving a widget that isn't there changes nothing`() =
+        assertEquals(listOf(1, 2), moved(listOf(1, 2), 9, 1))
+
+    @Test fun `taller and shorter go one step at a time`() {
+        assertEquals(240, resized(200, 40, 100, 400))
+        assertEquals(160, resized(200, -40, 100, 400))
+    }
+
+    @Test fun `a widget never grows past its largest or shrinks past its smallest`() {
+        assertEquals(400, resized(380, 40, 100, 400))
+        assertEquals(100, resized(120, -40, 100, 400))
+    }
+
+    @Test fun `a widget whose largest is below its smallest stays at its smallest`() =
+        assertEquals(100, resized(100, 40, 100, 50))
 }

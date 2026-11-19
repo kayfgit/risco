@@ -35,6 +35,25 @@ fun widgetHeight(minHeight: Int, minResizeHeight: Int, targetRows: Int, row: Int
     else -> fallback
 }
 
+/** [ids] with [id] moved [by] places, up for negative, stopping at either end. */
+fun <T> moved(ids: List<T>, id: T, by: Int): List<T> {
+    val from = ids.indexOf(id)
+    if (from < 0) return ids
+    val to = (from + by).coerceIn(0, ids.lastIndex)
+    if (to == from) return ids
+    return ids.toMutableList().apply {
+        removeAt(from)
+        add(to, id)
+    }
+}
+
+/**
+ * A widget's height one [step] taller (or shorter, for a negative step), kept between the smallest
+ * and largest it allows. When the largest is below the smallest, as some widgets declare, the
+ * smallest wins.
+ */
+fun resized(height: Int, step: Int, min: Int, max: Int): Int = (height + step).coerceIn(min, maxOf(min, max))
+
 /** Hands out [WidgetView]s, so every widget on home can be held for its menu. */
 class WidgetHost(context: Context) : AppWidgetHost(context, HOST_ID) {
     override fun onCreateView(context: Context, appWidgetId: Int, appWidget: AppWidgetProviderInfo?) =
