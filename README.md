@@ -187,7 +187,7 @@ On a Galaxy A36 (Android 17) with 108 apps installed, risco 0.2.0:
 - **Download size:** `risco-0.2.0.apk` is 144,770 bytes. Release builds are shrunk with R8 and
   use no libraries beyond Kotlin's own.
 - **Memory:** `adb shell dumpsys meminfo com.kayf.risco` with risco as the home screen settles at
-  27–48 MB (total PSS) within about a second of starting. In that first second the total reads
+  27–52 MB (total PSS) within about a second of starting. In that first second the total reads
   much higher, 150–290 MB, but most of it is `.apk mmap`: to read each app's name and icon,
   Android maps that app's installed files into risco. Those pages are shared and read-only, so
   the system can take them back at any time, and they're gone in under half a second. risco's own
