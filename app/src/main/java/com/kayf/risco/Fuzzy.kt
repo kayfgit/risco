@@ -37,4 +37,26 @@ object Fuzzy {
     }
 
     fun tier(score: Int) = score / 1000
+
+    /**
+     * The best [limit] matches for [query] in [pool]. Each item can go by several [names] (a
+     * renamed app keeps its old one), already folded, and the best of them counts. A closer kind
+     * of match comes first, then the item [uses] says is opened more, then the closer score, then
+     * the alphabet.
+     */
+    fun <T> rank(pool: List<T>, query: String, names: (T) -> List<String>, uses: (T) -> Int, limit: Int): List<T> {
+        val q = fold(query)
+        return pool.map { item -> item to names(item).maxOf { score(q, it) } }
+            .filter { it.second >= 0 }
+            .sortedWith(
+                compareBy<Pair<T, Int>>(
+                    { -tier(it.second) },
+                    { -uses(it.first) },
+                    { -it.second },
+                    { names(it.first).first() },
+                ),
+            )
+            .take(limit)
+            .map { it.first }
+    }
 }

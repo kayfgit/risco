@@ -73,6 +73,13 @@ class Store(context: Context) {
         saveWidgets()
     }
 
+    /** The name someone gave an app or shortcut, or null for its own. */
+    fun name(key: String): String? = prefs.getString("name:$key", null)
+
+    fun rename(key: String, name: String?) = prefs.edit().apply {
+        if (name == null) remove("name:$key") else putString("name:$key", name)
+    }.apply()
+
     fun launches(key: String) = prefs.getInt("n:$key", 0)
 
     fun launched(key: String) = prefs.edit().putInt("n:$key", launches(key) + 1).apply()
@@ -83,6 +90,9 @@ class Store(context: Context) {
 
     private fun saveHidden() = prefs.edit().putStringSet("hidden", hidden.toSet()).apply()
 }
+
+/** What an app or shortcut is called: the name someone gave it, if any, or its own. */
+fun displayLabel(original: String, custom: String?) = custom?.trim()?.takeIf { it.isNotEmpty() } ?: original
 
 fun encodeIds(ids: List<Int>) = ids.joinToString(",")
 

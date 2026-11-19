@@ -2,6 +2,7 @@ package com.kayf.risco
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ActivityNotFoundException
@@ -32,7 +33,10 @@ import android.view.Menu
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ScrollView
@@ -98,7 +102,7 @@ class MainActivity : Activity() {
         anchor = findViewById(R.id.anchor)
 
         store = Store(this)
-        apps = Apps(this) { loaded, pinned ->
+        apps = Apps(this, store::name) { loaded, pinned ->
             all = loaded
             shortcuts = pinned
             store.pinNew(pinned.map { it.key })
@@ -327,7 +331,7 @@ class MainActivity : Activity() {
             Arg.CHOICE -> parsed.command.choicesFor(parsed.argument).map { choice ->
                 Hit(":${parsed.command.word} $choice", null) { run(parsed.command, null, choice) }
             }
-            Arg.WIDGET -> rank(choices(), parsed.argument, { it.folded }, { 0 }).map { choice ->
+            Arg.WIDGET -> Fuzzy.rank(choices(), parsed.argument, { listOf(it.folded) }, { 0 }, MAX_HITS).map { choice ->
                 Hit(":${parsed.command.word} ${choice.label}", null) {
                     closeSearch()
                     addWidget(choice.info)
@@ -340,29 +344,14 @@ class MainActivity : Activity() {
     }
 
     private fun pool(arg: Arg): List<Item> = when (arg) {
+        Arg.ITEM -> searchable
         Arg.PINNED -> searchable.filter { it.key in store.pins }
         Arg.HIDDEN -> all.filter { it.key in store.hidden }
         else -> visible
     }
 
     private fun <T : Item> ranked(pool: List<T>, query: String) =
-        rank(pool, query, { it.folded }, { store.launches(it.key) })
-
-    private fun <T> rank(pool: List<T>, query: String, folded: (T) -> String, uses: (T) -> Int): List<T> {
-        val q = Fuzzy.fold(query)
-        return pool.map { it to Fuzzy.score(q, folded(it)) }
-            .filter { it.second >= 0 }
-            .sortedWith(
-                compareBy<Pair<T, Int>>(
-                    { -Fuzzy.tier(it.second) },
-                    { -uses(it.first) },
-                    { -it.second },
-                    { folded(it.first) },
-                ),
-            )
-            .take(MAX_HITS)
-            .map { it.first }
-    }
+        Fuzzy.rank(pool, query, { it.names }, { store.launches(it.key) }, MAX_HITS)
 
     /**
      * Every profile's widgets, work ones marked like work apps. A widget registered twice under one
@@ -383,12 +372,14 @@ class MainActivity : Activity() {
             .also { widgetChoices = it }
     }
 
-    /** [item] is set for commands that take an app; only `:unpin` also takes a shortcut. */
+    /** [item] is set for commands that take an app; `:unpin` and `:rename` also take a shortcut. */
     private fun run(command: Command, item: Item?, choice: String? = null) {
         val app = item as? App
         when (command) {
             Command.PIN -> store.pin(app!!.key)
             Command.UNPIN -> unpin(item!!)
+            // After search closes, so the dialog's keyboard isn't hidden along with search's.
+            Command.RENAME -> root.post { rename(item!!) }
             Command.HIDE -> store.hide(app!!.key)
             Command.UNHIDE -> store.unhide(app!!.key)
             Command.INFO -> apps.details(app!!)
@@ -403,6 +394,45 @@ class MainActivity : Activity() {
         }
         closeSearch()
         refresh()
+    }
+
+    /**
+     * Asks for a new name, starting from the current one. Saving it blank, or as the item's own
+     * name, goes back to its own name, and so does Reset.
+     */
+    private fun rename(item: Item) {
+        val custom = store.name(item.key)
+        val own = item.original.removeSuffix(" [work]")
+        val field = EditText(this).apply {
+            setText(custom ?: own)
+            hint = own
+            isSingleLine = true
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            selectAll()
+        }
+        val box = FrameLayout(this).apply {
+            setPadding(dp(20), dp(8), dp(20), 0)
+            addView(field)
+        }
+        fun save(name: String?) {
+            store.rename(item.key, name?.trim()?.takeIf { it.isNotEmpty() && it != own })
+            apps.reload()
+        }
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Rename")
+            .setView(box)
+            .setPositiveButton("Save") { _, _ -> save(field.text.toString()) }
+            .setNegativeButton("Cancel", null)
+        if (custom != null) builder.setNeutralButton("Reset") { _, _ -> save(null) }
+        val dialog = builder.create()
+        field.setOnEditorActionListener { _, _, _ ->
+            save(field.text.toString())
+            dialog.dismiss()
+            true
+        }
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        dialog.show()
+        field.requestFocus()
     }
 
     private fun unpin(item: Item) {
@@ -601,7 +631,10 @@ class MainActivity : Activity() {
                 true
             }
         when (item) {
-            is Shortcut -> add(Command.UNPIN, "Remove from home")
+            is Shortcut -> {
+                add(Command.RENAME, "Rename")
+                add(Command.UNPIN, "Remove from home")
+            }
             is App -> {
                 for (shortcut in apps.shortcutsFor(item)) {
                     val label = shortcut.longLabel?.takeIf { it.isNotBlank() } ?: shortcut.shortLabel
@@ -612,6 +645,7 @@ class MainActivity : Activity() {
                     }
                 }
                 if (item.key in store.pins) add(Command.UNPIN, "Remove from home") else add(Command.PIN, "Add to home")
+                add(Command.RENAME, "Rename")
                 add(Command.HIDE, "Hide")
                 add(Command.INFO, "App info")
                 add(Command.RM, "Uninstall")
