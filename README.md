@@ -26,7 +26,11 @@ your thumb learns where they are. A letter with no apps hands over to the closes
 
 The letters come from the phone's languages, plus A to Z: a Russian phone gets А to Я above A to
 Z, a Japanese one the kana rows. They depend only on the languages, never on which apps are
-installed.
+installed. For a shorter rail, `:alphabet` picks one alphabet alone, and names in other scripts
+are spelled in it to find their letter ("Камера" goes under K on `:alphabet english`).
+
+risco is in English, German, Portuguese, Spanish, French, Russian and Japanese, and follows the
+phone unless `:language` gives it its own. Commands are typed in English in every language.
 
 Shortcuts, from an app or added to home, need risco to be the default launcher (`:default`):
 Android only shares them with the home app.
@@ -53,6 +57,8 @@ one at the bottom.
 | `:widget <widget>` | Add a widget to the top of home. Hold it to move, resize or remove it |
 | `:wallpaper` | The phone's wallpaper picker |
 | `:icons <on\|off>` | Grey icons beside app names. Off by default |
+| `:alphabet <name>` | The rail's letters: `default`, `english`, `russian`, `japanese`, `greek`, `korean`, `arabic`, `hebrew`, `hindi` or `thai` |
+| `:language` | Android's page for risco's own language (Android 13 and up) |
 | `:menu` | What holding empty space opens |
 | `:set` | Android settings |
 | `:default` | Choose the default launcher |
