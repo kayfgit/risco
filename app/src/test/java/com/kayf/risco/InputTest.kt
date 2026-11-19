@@ -53,12 +53,23 @@ class InputTest {
     }
 
     @Test
-    fun `clock offers its positions as you type`() {
-        assertEquals(Input.Full(Command.CLOCK, "bo"), parseInput(":clock bo"))
-        assertEquals(listOf("top", "middle", "bottom", "off"), Command.CLOCK.choicesFor(""))
-        assertEquals(listOf("bottom"), Command.CLOCK.choicesFor("bo"))
-        assertEquals(listOf("off"), Command.CLOCK.choicesFor(" OF"))
-        assertEquals(emptyList<String>(), Command.CLOCK.choicesFor("x"))
+    fun `icons offers on and off as you type`() {
+        assertEquals(Input.Full(Command.ICONS, "o"), parseInput(":icons o"))
+        assertEquals(listOf("on", "off"), Command.ICONS.choicesFor(""))
+        assertEquals(listOf("off"), Command.ICONS.choicesFor(" OF"))
+        assertEquals(emptyList<String>(), Command.ICONS.choicesFor("x"))
+    }
+
+    @Test
+    fun `clock is gone`() = assertEquals(Input.Partial(emptyList()), parseInput(":clock"))
+
+    @Test
+    fun `menu and wallpaper run at once, widget waits for a name`() {
+        assertEquals(Input.Full(Command.MENU, ""), parseInput(":menu"))
+        assertEquals(Input.Full(Command.WALLPAPER, ""), parseInput(":wallpaper"))
+        assertEquals(Input.Partial(listOf(Command.WALLPAPER, Command.WIDGET)), parseInput(":w"))
+        assertEquals(Input.Partial(listOf(Command.WIDGET)), parseInput(":widget"))
+        assertEquals(Input.Full(Command.WIDGET, "clock"), parseInput(":widget clock"))
     }
 
     @Test

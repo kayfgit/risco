@@ -1,7 +1,7 @@
 # risco
 
 A one-handed Android launcher for people who'd rather not look for things. Every feature is free,
-nothing runs in the background, and there are no icons: just names, under your thumb.
+nothing runs in the background, and there are no icons unless you ask: just names, under your thumb.
 
 Press the alphabet rail, slide to a letter, slide off to an app, let go. That's one stroke.
 
@@ -13,11 +13,24 @@ Press the alphabet rail, slide to a letter, slide off to an app, let go. That's 
 | Change your mind | Let go on the rail or past the far end of the list, or slide back onto the rail for another letter |
 | Search | Swipe up, type, Enter. Matches accents, word starts and initials (`gm` finds Google Maps) |
 | Notifications | Swipe down |
-| Pin, hide, uninstall | Hold an app on home or in search |
+| An app's shortcuts (New message, New tab…) | Hold the app on home or in search |
+| Add to home, hide, uninstall | Hold an app on home or in search |
+| Add a website or chat to home | Use the app's own "Add to home screen", then confirm. Hold it to remove it |
+| Wallpaper, widgets, icons | Hold empty space on home |
+| Remove a widget | Hold it |
 
 Both edges are rails, one for each thumb, but only the one you used last is drawn. Press the other
 edge and it takes over. The list opens beside whichever rail you pressed. Letters never move, so
 your thumb learns where they are. A letter with no apps hands over to the closest one that has some.
+
+Shortcuts, from an app or added to home, need risco to be the default launcher (`:default`):
+Android only shares them with the home app.
+
+### With TalkBack or Switch Access
+
+Each letter on the drawn rail is a button: touch or swipe to it to hear "G, 10 apps", and
+double-tap for a menu of its apps. Search, notifications, and wallpaper and widgets are in the
+actions menu of every letter and pinned app, since swipes and holds on home go to TalkBack.
 
 ## Commands
 
@@ -26,11 +39,14 @@ one at the bottom.
 
 | Command | |
 |---|---|
-| `:pin <app>` / `:unpin <app>` | Add to or remove from home |
+| `:pin <app>` / `:unpin <app>` | Add to or remove from home. `:unpin` also takes shortcuts |
 | `:hide <app>` / `:unhide <app>` | Take off the rail and search, or bring back |
 | `:info <app>` | Android's page for the app |
 | `:rm <app>` | Uninstall |
-| `:clock <top\|middle\|bottom\|off>` | Where the clock and date go. Off by default |
+| `:widget <widget>` | Add a widget to the top of home. Hold it to remove it |
+| `:wallpaper` | The phone's wallpaper picker |
+| `:icons <on\|off>` | Grey icons beside app names. Off by default |
+| `:menu` | What holding empty space opens |
 | `:set` | Android settings |
 | `:default` | Choose the default launcher |
 | `:q` | Close |
@@ -60,6 +76,8 @@ Trying risco doesn't replace your launcher. It installs as a normal app until yo
 | [Fuzzy.kt](app/src/main/java/com/kayf/risco/Fuzzy.kt) | Search ranking and accent folding |
 | [Commands.kt](app/src/main/java/com/kayf/risco/Commands.kt) | The `:` line |
 | [Apps.kt](app/src/main/java/com/kayf/risco/Apps.kt) | Installed apps, kept up to date by the system |
+| [Widgets.kt](app/src/main/java/com/kayf/risco/Widgets.kt) | Widgets on home, and how `:widget` names them |
+| [Hold.kt](app/src/main/java/com/kayf/risco/Hold.kt) | A press held still, for home's menu and a widget's |
 | [MainActivity.kt](app/src/main/java/com/kayf/risco/MainActivity.kt) | Home, search and wiring |
 
 No AndroidX, no Compose, no runtime dependencies beyond Kotlin itself.

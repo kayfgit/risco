@@ -11,6 +11,10 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Widget providers, for :widget to list and home to draw. -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
     </queries>
 
     <!-- No backups. On Android 11 allowBackup="false" covers everything; from 12 the rules file
@@ -41,6 +45,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <!-- Keeps risco openable as a normal app, so it can be tried without replacing your launcher. -->
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Other apps pinning a shortcut to home, like Chrome's "Add to home screen". A dialog
+             over the app that asked, so home doesn't jump to the front. -->
+        <activity
+            android:name=".PinActivity"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Risco.Pin">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
             </intent-filter>
         </activity>
     </application>

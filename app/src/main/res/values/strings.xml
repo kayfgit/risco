@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Lines stay under 26 characters to fit between the rails without wrapping. -->
-    <string name="hint">welcome to risco.\n\npress either edge,\nslide to a letter,\nthen off to an app,\nand let go.\n\nswipe up to search.\n: for commands.\n:default sets your home.\n\nthis note goes away\nonce you open an app.</string>
-    <string name="search_hint">search  : commands</string>
+    <string name="hint">Welcome to risco.\n\nPress either edge,\nslide to a letter,\nthen off to an app,\nand let go.\n\nSwipe up to search.\nType : for commands.\nHold empty space for\nwallpaper and widgets.\n:default sets your home.\n\nThis note goes away\nonce you open an app.</string>
+    <string name="search_hint">Search, or : for commands</string>
 </resources>

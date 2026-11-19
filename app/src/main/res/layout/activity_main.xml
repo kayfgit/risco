@@ -12,48 +12,14 @@
         android:orientation="vertical"
         android:paddingHorizontal="76dp">
 
-        <!-- :clock moves the clock block between these spacers: top, middle, bottom or off. -->
-        <Space
-            android:id="@+id/space_top"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:visibility="gone" />
-
+        <!-- Widgets added from the hold menu or :widget, top to bottom. -->
         <LinearLayout
-            android:id="@+id/clock"
-            android:layout_width="wrap_content"
+            android:id="@+id/widgets"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginVertical="16dp"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-        <TextClock
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format12Hour="h:mm"
-            android:format24Hour="HH:mm"
-            android:shadowColor="#000000"
-            android:shadowRadius="6"
-            android:textColor="#FFFFFF"
-            android:textSize="44sp"
-            android:typeface="monospace" />
-
-        <TextClock
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:format12Hour="EEE d MMM"
-            android:format24Hour="EEE d MMM"
-            android:shadowColor="#000000"
-            android:shadowRadius="6"
-            android:textColor="#D0FFFFFF"
-            android:textSize="15sp"
-            android:typeface="monospace" />
-        </LinearLayout>
+            android:orientation="vertical" />
 
         <Space
-            android:id="@+id/space_mid"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />

@@ -1,19 +1,25 @@
 package com.kayf.risco
 
-/** What a command's argument is picked from: nothing, a set of apps, or the command's own choices. */
-enum class Arg { NONE, APP, PINNED, HIDDEN, CHOICE }
+/**
+ * What a command's argument is picked from: nothing, a set of apps, the installed widgets, or the
+ * command's own choices.
+ */
+enum class Arg { NONE, APP, PINNED, HIDDEN, WIDGET, CHOICE }
 
 enum class Command(val word: String, val arg: Arg, val help: String, val choices: List<String> = emptyList()) {
-    PIN("pin", Arg.APP, "add an app to home"),
-    UNPIN("unpin", Arg.PINNED, "remove an app from home"),
-    HIDE("hide", Arg.APP, "take an app off the rail and search"),
-    UNHIDE("unhide", Arg.HIDDEN, "bring a hidden app back"),
-    INFO("info", Arg.APP, "open an app's system page"),
-    RM("rm", Arg.APP, "uninstall an app"),
-    CLOCK("clock", Arg.CHOICE, "where the clock goes, or off", listOf("top", "middle", "bottom", "off")),
+    PIN("pin", Arg.APP, "Add an app to home"),
+    UNPIN("unpin", Arg.PINNED, "Remove an app or shortcut from home"),
+    HIDE("hide", Arg.APP, "Hide an app from the rail and search"),
+    UNHIDE("unhide", Arg.HIDDEN, "Bring back a hidden app"),
+    INFO("info", Arg.APP, "Open an app's info page"),
+    RM("rm", Arg.APP, "Uninstall an app"),
+    ICONS("icons", Arg.CHOICE, "Show or hide app icons", listOf("on", "off")),
+    MENU("menu", Arg.NONE, "Open the home menu"),
+    WALLPAPER("wallpaper", Arg.NONE, "Change the wallpaper"),
+    WIDGET("widget", Arg.WIDGET, "Add a widget to home"),
     SET("set", Arg.NONE, "open Android settings"),
-    DEFAULT("default", Arg.NONE, "choose the default launcher"),
-    Q("q", Arg.NONE, "close this"),
+    DEFAULT("default", Arg.NONE, "Choose your home app"),
+    Q("q", Arg.NONE, "Close search"),
 }
 
 sealed class Input {
