@@ -190,7 +190,7 @@ class MainActivity : Activity() {
 
     private fun refresh() {
         visible = all.filter { it.key !in store.hidden }
-        rail.setApps(visible)
+        rail.setApps(visible, apps.alphabet.letters)
         renderPins()
         if (searching) renderHits()
     }

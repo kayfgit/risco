@@ -4,9 +4,6 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-/** The rail's letters, top to bottom. They never move, so the thumb can learn where they are. */
-const val LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
-
 /** Where things are, in pixels, always as if the rail were on the right. */
 data class Geometry(
     val width: Float,
@@ -36,8 +33,11 @@ sealed class Release<out T> {
  * One stroke: press the rail, slide along it to a letter, slide off it towards the apps, slide to
  * an app, let go. Sliding back onto the rail reopens the letters, and letting go on the rail or past
  * the far end of the panel cancels.
+ *
+ * The rail has [letters] letters, from the phone's [Alphabet]. They never move, so the thumb can
+ * learn where they are.
  */
-class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List<T>) {
+class Drag<T>(private val g: Geometry, private val letters: Int, private val appsIn: (letter: Int) -> List<T>) {
     var phase = Phase.IDLE
         private set
     var letter = -1
@@ -149,17 +149,17 @@ class Drag<T>(private val g: Geometry, private val appsIn: (letter: Int) -> List
     }
 
     private fun letterAt(y: Float): Int {
-        val slot = (g.railBottom - g.railTop) / LETTERS.length
-        return floor((y - g.railTop) / slot).toInt().coerceIn(0, LETTERS.length - 1)
+        val slot = (g.railBottom - g.railTop) / letters
+        return floor((y - g.railTop) / slot).toInt().coerceIn(0, letters - 1)
     }
 
     /** A letter with no apps gives way to the closest one that has some, so no stretch of the rail is dead. */
     private fun nearestFilled(from: Int): Int {
-        for (distance in LETTERS.indices) {
+        for (distance in 0 until letters) {
             val before = from - distance
             if (before >= 0 && appsIn(before).isNotEmpty()) return before
             val after = from + distance
-            if (after < LETTERS.length && appsIn(after).isNotEmpty()) return after
+            if (after < letters && appsIn(after).isNotEmpty()) return after
         }
         return -1
     }

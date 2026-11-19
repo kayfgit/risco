@@ -32,10 +32,11 @@ class App(
     val component: ComponentName,
     val user: UserHandle,
     override val key: String,
+    /** Which rail letter it goes under, from the phone's [Alphabet]. */
+    val letter: Int,
     override val icon: Bitmap? = null,
 ) : Item {
     override val folded = Fuzzy.fold(label)
-    val letter = Fuzzy.letterIndex(label)
 }
 
 /** A shortcut pinned to home, such as a website from Chrome's "Add to home screen". */
@@ -60,6 +61,9 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
     private var started = false
     private val reload = Runnable { load() }
     private val metrics = context.resources.displayMetrics
+
+    /** The rail's letters, from the phone's languages. A language change restarts home, so this is built once. */
+    val alphabet = phoneAlphabet(context.resources.configuration.locales)
 
     /** The size icons are drawn at: a little taller than an 18sp name, growing with the font. */
     val iconSize = (22 * context.resources.configuration.fontScale * metrics.density).toInt()
@@ -149,7 +153,14 @@ class Apps(private val context: Context, private val onChange: (List<App>, List<
                     .map {
                         val label = it.label.toString().trim() + if (user == me) "" else " [work]"
                         val key = "${it.componentName.flattenToShortString()}@${users.getSerialNumberForUser(user)}"
-                        App(label, it.componentName, user, key, if (withIcons) icon(it) else null)
+                        App(
+                            label,
+                            it.componentName,
+                            user,
+                            key,
+                            alphabet.letterOf(label),
+                            if (withIcons) icon(it) else null,
+                        )
                     }
             }.sortedBy { it.folded }
             val pinned = launcher.profiles.flatMap { user ->

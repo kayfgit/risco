@@ -11,15 +11,19 @@ class DragTest {
         width = 400f, railLeft = 340f, railTop = 270f, railBottom = 810f,
         panelLeft = 100f, panelTop = 50f, panelBottom = 850f, rowHeight = 50f, hysteresis = 8f,
     )
-    private val slot = (g.railBottom - g.railTop) / LETTERS.length
+    private val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
+    private val slot = (g.railBottom - g.railTop) / letters.length
     private val railX = 370f
     private val listX = 200f
 
-    private fun yOf(letter: Char) = g.railTop + (LETTERS.indexOf(letter) + 0.5f) * slot
+    private fun yOf(letter: Char) = g.railTop + (letters.indexOf(letter) + 0.5f) * slot
+
+    private fun letterOf(name: String) =
+        letters.indexOf(name.first().uppercaseChar()).takeIf { it >= 0 } ?: letters.lastIndex
 
     private fun drag(vararg apps: String): Drag<String> {
-        val byLetter = apps.groupBy { Fuzzy.letterIndex(it) }
-        return Drag(g) { byLetter[it] ?: emptyList() }
+        val byLetter = apps.groupBy { letterOf(it) }
+        return Drag(g, letters.length) { byLetter[it] ?: emptyList() }
     }
 
     @Test
@@ -51,9 +55,9 @@ class DragTest {
     fun `an empty letter snaps to the closest filled one`() {
         val d = drag("Camera", "Zoom")
         d.pressRail(yOf('D'))
-        assertEquals(LETTERS.indexOf('C'), d.letter)
+        assertEquals(letters.indexOf('C'), d.letter)
         d.move(railX, yOf('Y'))
-        assertEquals(LETTERS.indexOf('Z'), d.letter)
+        assertEquals(letters.indexOf('Z'), d.letter)
     }
 
     @Test
@@ -171,10 +175,10 @@ class DragTest {
 
     @Test
     fun `every letter on the rail is reachable by y alone`() {
-        val d = drag(*LETTERS.map { "$it-app" }.toTypedArray())
-        for (c in LETTERS) {
+        val d = drag(*letters.map { "$it-app" }.toTypedArray())
+        for (c in letters) {
             d.pressRail(yOf(c))
-            assertEquals(LETTERS.indexOf(c), d.letter)
+            assertEquals(letters.indexOf(c), d.letter)
         }
     }
 }

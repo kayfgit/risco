@@ -11,13 +11,6 @@ object Fuzzy {
     fun fold(text: String): String =
         Normalizer.normalize(text, Normalizer.Form.NFD).replace(marks, "").lowercase()
 
-    /** The rail letter a label belongs under, as an index into [LETTERS]. */
-    fun letterIndex(label: String): Int {
-        val first = fold(label).firstOrNull()?.uppercaseChar() ?: '#'
-        val index = LETTERS.indexOf(first)
-        return if (index >= 0) index else LETTERS.length - 1
-    }
-
     /**
      * Higher is better, -1 is no match. Both arguments must already be folded.
      * Deliberately tiers rather than a blended score: [tier] says how the query matched, and a

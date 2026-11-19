@@ -22,6 +22,7 @@ import android.view.accessibility.AccessibilityNodeProvider
 import android.widget.Button
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 /**
  * The alphabet rail and the panel of apps beside it, drawn straight to the canvas so a drag only
@@ -60,11 +61,12 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private val letterSlot = 22 * density
     private val iconGap = 10 * density
 
-    private var byLetter: Array<List<App>> = Array(LETTERS.length) { emptyList() }
+    private var letters: List<String> = listOf(OTHER)
+    private var byLetter: Array<List<App>> = arrayOf(emptyList())
     private var insetTop = 0
     private var insetBottom = 0
     private var g = Geometry(0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 0f)
-    private var drag = Drag(g) { byLetter[it] }
+    private var drag = Drag(g, letters.size) { byLetter[it] }
 
     private var pointer = -1
     private var fingerX = 0f
@@ -76,11 +78,10 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private var hovered = NONE
     private var focused = NONE
 
-    private val glyphs = LETTERS.toCharArray()
-    private val letter = paint(13f, 0xD0FFFFFF.toInt(), Paint.Align.CENTER).apply {
+    private val letter = paint(LETTER_SIZE, 0xD0FFFFFF.toInt(), Paint.Align.CENTER).apply {
         setShadowLayer(3 * density, 0f, 0f, Color.BLACK)
     }
-    private val letterEmpty = paint(13f, 0x55FFFFFF, Paint.Align.CENTER).apply {
+    private val letterEmpty = paint(LETTER_SIZE, 0x55FFFFFF, Paint.Align.CENTER).apply {
         setShadowLayer(3 * density, 0f, 0f, Color.BLACK)
     }
     private val letterOn = paint(20f, Color.WHITE, Paint.Align.CENTER).apply { isFakeBoldText = true }
@@ -104,9 +105,14 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
         textAlign = alignment
     }
 
-    fun setApps(apps: List<App>) {
+    /** [letters] are the phone's alphabets, and each app's [App.letter] indexes into them. */
+    fun setApps(apps: List<App>, letters: List<String>) {
         val grouped = apps.groupBy { it.letter }
-        byLetter = Array(LETTERS.length) { grouped[it] ?: emptyList() }
+        byLetter = Array(letters.size) { grouped[it] ?: emptyList() }
+        if (letters != this.letters) {
+            this.letters = letters
+            configure()
+        }
         invalidate()
         contentChanged()
     }
@@ -129,7 +135,12 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private fun configure() {
         val w = width.toFloat()
         val bottom = height - insetBottom - 16 * density
-        val railTop = max(insetTop + 8 * density, bottom - letterSlot * LETTERS.length)
+        val railTop = max(insetTop + 8 * density, bottom - letterSlot * letters.size)
+        // Longer alphabets (Russian and A to Z is 59 letters) squeeze into the same height, so
+        // their letters shrink to fit their slots.
+        val slot = (bottom - railTop) / letters.size
+        letter.textSize = min(LETTER_SIZE * scaled, slot * 0.8f)
+        letterEmpty.textSize = letter.textSize
         g = Geometry(
             width = w,
             railLeft = w - railWidth,
@@ -141,7 +152,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             rowHeight = rowHeight,
             hysteresis = 8 * density,
         )
-        drag = Drag(g) { byLetter[it] }
+        drag = Drag(g, letters.size) { byLetter[it] }
         contentChanged()
 
         // The system only honours about 200dp of this per edge, from the bottom up. Above that, a
@@ -217,16 +228,16 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     }
 
     private fun drawRail(canvas: Canvas) {
-        val slot = (g.railBottom - g.railTop) / LETTERS.length
+        val slot = (g.railBottom - g.railTop) / letters.size
         val x = screenX(g.width - railCenter)
-        for (i in glyphs.indices) {
+        for (i in letters.indices) {
             val paint = when {
                 i == drag.letter -> letterOn
                 byLetter[i].isEmpty() -> letterEmpty
                 else -> letter
             }
             val y = g.railTop + slot * (i + 0.5f) - (paint.ascent() + paint.descent()) / 2
-            canvas.drawText(glyphs, i, 1, x, y, paint)
+            canvas.drawText(letters[i], x, y, paint)
         }
     }
 
@@ -291,16 +302,16 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
     private fun hostNode() = AccessibilityNodeInfo(this).also { info ->
         onInitializeAccessibilityNodeInfo(info)
-        for (i in LETTERS.indices) if (byLetter[i].isNotEmpty()) info.addChild(this, i)
+        for (i in letters.indices) if (byLetter[i].isNotEmpty()) info.addChild(this, i)
     }
 
     private fun letterNode(id: Int): AccessibilityNodeInfo? {
-        if (id !in LETTERS.indices || byLetter[id].isEmpty()) return null
+        if (id !in letters.indices || byLetter[id].isEmpty()) return null
         return AccessibilityNodeInfo(this, id).apply {
             setParent(this@RailView)
             packageName = context.packageName
             className = Button::class.java.name
-            contentDescription = letterDescription(LETTERS[id], byLetter[id].size)
+            contentDescription = letterDescription(letters[id], byLetter[id].size)
             isEnabled = true
             isClickable = true
             isScreenReaderFocusable = true
@@ -320,7 +331,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     }
 
     private fun performLetter(id: Int, action: Int): Boolean {
-        if (id !in LETTERS.indices || byLetter[id].isEmpty()) return false
+        if (id !in letters.indices || byLetter[id].isEmpty()) return false
         return when (action) {
             AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS -> {
                 if (focused == id) return false
@@ -356,14 +367,14 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     /** The letter of the drawn rail under a finger, if it has apps. */
     private fun letterUnder(x: Float, y: Float): Int {
         if (drag.railAt(x, y) != side) return NONE
-        val slot = (g.railBottom - g.railTop) / LETTERS.length
-        val i = floor((y - g.railTop) / slot).toInt().coerceIn(0, LETTERS.length - 1)
+        val slot = (g.railBottom - g.railTop) / letters.size
+        val i = floor((y - g.railTop) / slot).toInt().coerceIn(0, letters.size - 1)
         return if (byLetter[i].isEmpty()) NONE else i
     }
 
     /** Where a letter of the drawn rail sits, in this view. */
     private fun letterBounds(i: Int): Rect {
-        val slot = (g.railBottom - g.railTop) / LETTERS.length
+        val slot = (g.railBottom - g.railTop) / letters.size
         val top = (g.railTop + slot * i).toInt()
         val bottom = (g.railTop + slot * (i + 1)).toInt()
         val wide = railWidth.toInt()
@@ -383,7 +394,7 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
             setSource(this@RailView, id)
             packageName = context.packageName
             className = Button::class.java.name
-            contentDescription = letterDescription(LETTERS[id], byLetter[id].size)
+            contentDescription = letterDescription(letters[id], byLetter[id].size)
         }
         parent?.requestSendAccessibilityEvent(this, event)
     }
@@ -396,5 +407,8 @@ class RailView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
     private companion object {
         const val SCRIM = 0xD0000000.toInt()
         const val NONE = -1
+
+        /** sp, for a rail of 22dp slots. */
+        const val LETTER_SIZE = 13f
     }
 }
