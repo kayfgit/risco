@@ -69,9 +69,9 @@ class MainActivity : Activity() {
 
     /** What home does on a swipe or a hold, for TalkBack and Switch Access, which can do neither there. */
     private val homeActions = listOf(
-        HomeAction(R.id.action_search, "search", ::openSearch),
-        HomeAction(R.id.action_notifications, "notifications", ::expandShade),
-        HomeAction(R.id.action_menu, "wallpaper and widgets") { showHomeMenu(root.width / 2f, root.height / 2f) },
+        HomeAction(R.id.action_search, "Search apps", ::openSearch),
+        HomeAction(R.id.action_notifications, "Notifications", ::expandShade),
+        HomeAction(R.id.action_menu, "Wallpaper and widgets") { showHomeMenu(root.width / 2f, root.height / 2f) },
     )
 
     /** A widget id between asking to add it and it landing on home. */
@@ -230,7 +230,7 @@ class MainActivity : Activity() {
             }
         } catch (e: RuntimeException) {
             Log.w(TAG, "can't open ${item.key}", e)
-            Toast.makeText(this, "can't open ${item.label}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Can't open ${item.label}", Toast.LENGTH_SHORT).show()
             apps.changed()
         }
     }
@@ -241,7 +241,7 @@ class MainActivity : Activity() {
             apps.launch(shortcut)
         } catch (e: RuntimeException) {
             Log.w(TAG, "can't open shortcut ${shortcut.id}", e)
-            Toast.makeText(this, "can't open ${shortcut.shortLabel}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Can't open ${shortcut.shortLabel}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -424,7 +424,7 @@ class MainActivity : Activity() {
             startActivity(Intent(Intent.ACTION_SET_WALLPAPER))
         } catch (e: ActivityNotFoundException) {
             Log.w(TAG, "no wallpaper picker", e)
-            Toast.makeText(this, "no wallpaper picker", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No wallpaper app found", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -433,19 +433,19 @@ class MainActivity : Activity() {
         anchor.x = x
         anchor.y = y
         val menu = PopupMenu(this, anchor)
-        menu.menu.add("wallpaper").setOnMenuItemClickListener {
+        menu.menu.add("Wallpaper").setOnMenuItemClickListener {
             openWallpaper()
             true
         }
-        menu.menu.add("widgets").setOnMenuItemClickListener {
+        menu.menu.add("Widgets").setOnMenuItemClickListener {
             openSearch(":${Command.WIDGET.word} ")
             true
         }
-        menu.menu.add(if (store.icons) "hide icons" else "show icons").setOnMenuItemClickListener {
+        menu.menu.add(if (store.icons) "Hide icons" else "Show icons").setOnMenuItemClickListener {
             setIcons(!store.icons)
             true
         }
-        menu.menu.add("commands").setOnMenuItemClickListener {
+        menu.menu.add("Commands").setOnMenuItemClickListener {
             openSearch(":")
             true
         }
@@ -551,7 +551,7 @@ class MainActivity : Activity() {
         anchor.x = root.width / 2f
         anchor.y = widgets.y + view.y + view.height / 2f
         val menu = PopupMenu(this, anchor)
-        menu.menu.add("remove").setOnMenuItemClickListener {
+        menu.menu.add("Remove widget").setOnMenuItemClickListener {
             removeWidget(id)
             true
         }
@@ -585,19 +585,23 @@ class MainActivity : Activity() {
         menu.show()
     }
 
-    /** What holding an app or a pinned shortcut opens. An app's own shortcuts come first, above a line. */
+    /**
+     * What holding an app or a pinned shortcut opens. An app's own shortcuts come first, above a
+     * line where the phone draws one (Samsung's menus don't). Labels are plain words, not the
+     * commands they run, which are for typing.
+     */
     private fun showMenu(item: Item, x: Float, y: Float) {
         anchor.x = x
         anchor.y = y
         val menu = PopupMenu(this, anchor)
         menu.menu.setGroupDividerEnabled(true)
-        fun add(command: Command) = menu.menu.add(ACTIONS, Menu.NONE, Menu.NONE, command.word)
+        fun add(command: Command, label: String) = menu.menu.add(ACTIONS, Menu.NONE, Menu.NONE, label)
             .setOnMenuItemClickListener {
                 run(command, item)
                 true
             }
         when (item) {
-            is Shortcut -> add(Command.UNPIN)
+            is Shortcut -> add(Command.UNPIN, "Remove from home")
             is App -> {
                 for (shortcut in apps.shortcutsFor(item)) {
                     val label = shortcut.longLabel?.takeIf { it.isNotBlank() } ?: shortcut.shortLabel
@@ -607,10 +611,10 @@ class MainActivity : Activity() {
                         true
                     }
                 }
-                add(if (item.key in store.pins) Command.UNPIN else Command.PIN)
-                add(Command.HIDE)
-                add(Command.INFO)
-                add(Command.RM)
+                if (item.key in store.pins) add(Command.UNPIN, "Remove from home") else add(Command.PIN, "Add to home")
+                add(Command.HIDE, "Hide")
+                add(Command.INFO, "App info")
+                add(Command.RM, "Uninstall")
             }
         }
         menu.show()

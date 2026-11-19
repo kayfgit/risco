@@ -8,6 +8,6 @@ class AccessTest {
 
     @Test fun `one app is read as one app`() = assertEquals("Z, 1 app", letterDescription('Z', 1))
 
-    @Test fun `the hash letter is read as other, not as a symbol`() =
-        assertEquals("other, 2 apps", letterDescription('#', 2))
+    @Test fun `the hash letter is read as Other, not as a symbol`() =
+        assertEquals("Other, 2 apps", letterDescription('#', 2))
 }

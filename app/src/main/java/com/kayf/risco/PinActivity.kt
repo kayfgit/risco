@@ -29,12 +29,12 @@ class PinActivity : Activity() {
             return
         }
         AlertDialog.Builder(this)
-            .setTitle("add to home?")
+            .setTitle("Add to home screen?")
             .setMessage(shortcut.shortLabel)
-            .setPositiveButton("add") { _, _ ->
+            .setPositiveButton("Add") { _, _ ->
                 if (!runCatching { request.accept() }.getOrDefault(false)) Log.w(TAG, "pin ${shortcut.id} refused")
             }
-            .setNegativeButton("cancel", null)
+            .setNegativeButton("Cancel", null)
             .setOnDismissListener { finish() }
             .show()
     }
