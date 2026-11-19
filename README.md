@@ -22,7 +22,7 @@ letters along the edge of the screen: slide to a letter, slide to the app, let g
 | Quick facts | |
 |---|---|
 | Download size | 145 KB |
-| Memory | About 30–40 MB while it's your home screen |
+| Memory | About 30–50 MB while it's your home screen |
 | Battery | Nothing runs in the background, so it only uses battery while you're looking at it |
 | Internet | None. risco has no permission to go online, so nothing about you leaves the phone |
 | Permissions | Two: opening the notification shade, and asking Android to uninstall an app you chose |
@@ -187,8 +187,11 @@ On a Galaxy A36 (Android 17) with 108 apps installed, risco 0.2.0:
 - **Download size:** `risco-0.2.0.apk` is 144,770 bytes. Release builds are shrunk with R8 and
   use no libraries beyond Kotlin's own.
 - **Memory:** `adb shell dumpsys meminfo com.kayf.risco` with risco as the home screen settles at
-  27–42 MB (total PSS). For a few seconds right after it starts it can be much higher (about
-  290 MB was seen once); why hasn't been looked into yet.
+  27–48 MB (total PSS) within about a second of starting. In that first second the total reads
+  much higher, 150–290 MB, but most of it is `.apk mmap`: to read each app's name and icon,
+  Android maps that app's installed files into risco. Those pages are shared and read-only, so
+  the system can take them back at any time, and they're gone in under half a second. risco's own
+  memory (native and Java heap) peaks at around 40–55 MB while it reads every app.
 - **Background and internet:** the manifest has two activities and no services, receivers or
   scheduled jobs, and asks only for `EXPAND_STATUS_BAR` and `REQUEST_DELETE_PACKAGES`, with no
   `INTERNET`.
