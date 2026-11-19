@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- What home does on a swipe or a hold, as actions for TalkBack and Switch Access. -->
+    <item name="action_search" type="id" />
+    <item name="action_notifications" type="id" />
+    <item name="action_menu" type="id" />
+</resources>

@@ -67,6 +67,13 @@ class MainActivity : Activity() {
     private var barsTop = 0
     private var barsBottom = 0
 
+    /** What home does on a swipe or a hold, for TalkBack and Switch Access, which can do neither there. */
+    private val homeActions = listOf(
+        HomeAction(R.id.action_search, "search", ::openSearch),
+        HomeAction(R.id.action_notifications, "notifications", ::expandShade),
+        HomeAction(R.id.action_menu, "wallpaper and widgets") { showHomeMenu(root.width / 2f, root.height / 2f) },
+    )
+
     /** A widget id between asking to add it and it landing on home. */
     private var pendingWidget = AppWidgetManager.INVALID_APPWIDGET_ID
 
@@ -105,6 +112,8 @@ class MainActivity : Activity() {
         root.onSwipeDown = ::expandShade
         root.onHold = ::showHomeMenu
         rail.onOpen = ::open
+        rail.onLetter = ::showLetter
+        rail.actions = homeActions
         rail.side = store.railSide
         rail.onSide = { store.railSide = it }
         renderWidgets()
@@ -200,6 +209,7 @@ class MainActivity : Activity() {
                 showMenu(item, view.x, root.height / 2f)
                 true
             }
+            view.offer(homeActions)
             pins.addView(view)
         }
         hint.visibility = if (store.welcomed) View.GONE else View.VISIBLE
@@ -559,6 +569,20 @@ class MainActivity : Activity() {
             @Suppress("DEPRECATION")
             view.updateAppWidgetSize(null, w.toInt(), h.toInt(), w.toInt(), h.toInt())
         }
+    }
+
+    /** A rail letter's apps as a menu, for TalkBack and Switch Access, which can't make the stroke. */
+    private fun showLetter(letterApps: List<App>, y: Float) {
+        anchor.x = if (rail.side == Side.LEFT) 0f else root.width.toFloat()
+        anchor.y = y
+        val menu = PopupMenu(this, anchor)
+        for (app in letterApps) {
+            menu.menu.add(app.label).setOnMenuItemClickListener {
+                open(app)
+                true
+            }
+        }
+        menu.show()
     }
 
     /** What holding an app or a pinned shortcut opens. An app's own shortcuts come first, above a line. */
