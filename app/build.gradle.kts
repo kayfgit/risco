@@ -11,8 +11,23 @@ android {
         applicationId = "com.kayf.risco"
         minSdk = 30
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
+    }
+
+    // The release key, from the environment: GitHub's secrets when a release is built, or .env
+    // locally. Every release must be signed with it, or phones refuse the update. Without it
+    // (pull requests, install-local.ps1), release builds fall back to this machine's debug key.
+    val releaseKey = System.getenv("RISCO_KEYSTORE")?.takeIf { file(it).exists() }
+    signingConfigs {
+        if (releaseKey != null) {
+            create("release") {
+                storeFile = file(releaseKey)
+                storePassword = System.getenv("RISCO_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RISCO_KEY_ALIAS") ?: "risco"
+                keyPassword = System.getenv("RISCO_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -20,8 +35,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Sideloaded for now, so the debug key is enough to install an optimized build.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 

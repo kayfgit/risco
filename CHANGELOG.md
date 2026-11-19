@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.2.0 - 2026-11-19
+
+**TL;DR**
+- Hold an app for its shortcuts, add websites and chats to home from other apps, and use risco with
+  TalkBack.
+- Rename apps, move and resize widgets by dragging them, and pick which alphabet the rail shows.
+- risco now speaks seven languages.
+- The first release you can install straight from GitHub: download `risco-0.2.0.apk` below. If you
+  had risco from somewhere else, uninstall that first.
+
+**Details**
+
+- Releases are now signed with risco's own key and published here when a version is tagged, so
+  each new release installs over the last one and keeps your pins and settings.
 - risco speaks German, Portuguese, Spanish, French, Russian and Japanese, following the phone. On
   Android 13 and up you can give risco its own language with `:language`. Typed commands stay in
   English.
