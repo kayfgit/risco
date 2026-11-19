@@ -73,17 +73,20 @@ class MainActivity : Activity() {
     private var barsTop = 0
     private var barsBottom = 0
 
-    /** What home does on a swipe or a hold, for TalkBack and Switch Access, which can do neither there. */
-    private val homeActions = listOf(
-        HomeAction(R.id.action_search, getString(R.string.action_search), ::openSearch),
-        HomeAction(R.id.action_notifications, getString(R.string.action_notifications), ::expandShade),
-        HomeAction(R.id.action_menu, getString(R.string.action_wallpaper_widgets)) {
-            showHomeMenu(
-                root.width / 2f,
-                root.height / 2f,
-            )
-        },
-    )
+    /**
+     * What home does on a swipe or a hold, for TalkBack and Switch Access, which can do neither
+     * there. Built on first use: their labels are translated text, which an activity can't read
+     * until it has been created.
+     */
+    private val homeActions by lazy {
+        listOf(
+            HomeAction(R.id.action_search, getString(R.string.action_search), ::openSearch),
+            HomeAction(R.id.action_notifications, getString(R.string.action_notifications), ::expandShade),
+            HomeAction(R.id.action_menu, getString(R.string.action_wallpaper_widgets)) {
+                showHomeMenu(root.width / 2f, root.height / 2f)
+            },
+        )
+    }
 
     /** A widget id between asking to add it and it landing on home. */
     private var pendingWidget = AppWidgetManager.INVALID_APPWIDGET_ID
