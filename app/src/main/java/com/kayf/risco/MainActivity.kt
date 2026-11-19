@@ -112,6 +112,7 @@ class MainActivity : Activity() {
             refresh()
         }
         apps.icons = store.icons
+        apps.choice = AlphabetChoice.of(store.alphabet)
         widgetManager = AppWidgetManager.getInstance(this)
         widgetHost = WidgetHost(this)
 
@@ -392,6 +393,11 @@ class MainActivity : Activity() {
             Command.SET -> startActivity(Intent(Settings.ACTION_SETTINGS))
             Command.DEFAULT -> startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
             Command.ICONS -> setIcons(choice == "on")
+            Command.ALPHABET -> {
+                store.alphabet = choice!!
+                apps.choice = AlphabetChoice.of(choice)
+            }
+            Command.LANGUAGE -> openLanguage()
             Command.MENU -> root.post { showHomeMenu(root.width / 2f, root.height / 2f) }
             Command.WALLPAPER -> openWallpaper()
             Command.WIDGET -> {}
@@ -452,6 +458,15 @@ class MainActivity : Activity() {
     private fun setIcons(on: Boolean) {
         store.icons = on
         apps.icons = on
+    }
+
+    /** Android's page for risco's own language, from Android 13. Before that, risco follows the phone. */
+    private fun openLanguage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            startActivity(Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:$packageName")))
+        } else {
+            startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
+        }
     }
 
     private fun openWallpaper() {

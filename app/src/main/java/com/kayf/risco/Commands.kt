@@ -15,6 +15,8 @@ enum class Command(val word: String, val arg: Arg, val help: String, val choices
     INFO("info", Arg.APP, "Open an app's info page"),
     RM("rm", Arg.APP, "Uninstall an app"),
     ICONS("icons", Arg.CHOICE, "Show or hide app icons", listOf("on", "off")),
+    ALPHABET("alphabet", Arg.CHOICE, "Choose the rail's letters", AlphabetChoice.entries.map { it.word }),
+    LANGUAGE("language", Arg.NONE, "Choose risco's language"),
     MENU("menu", Arg.NONE, "Open the home menu"),
     WALLPAPER("wallpaper", Arg.NONE, "Change the wallpaper"),
     WIDGET("widget", Arg.WIDGET, "Add a widget to home"),
