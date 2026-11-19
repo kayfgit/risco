@@ -5,6 +5,10 @@ nothing runs in the background, and there are no icons unless you ask: just name
 
 Press the alphabet rail, slide to a letter, slide off to an app, let go. That's one stroke.
 
+<p align="center">
+  <img src="docs/demo/demo.gif" alt="risco on a phone: one stroke from the rail opens Calculator; three apps called Authenticator look the same until :icons on shows which is Google's" width="360">
+</p>
+
 ## Install
 
 1. On your phone, open the [latest release](https://github.com/kayfgit/risco/releases/latest) and
