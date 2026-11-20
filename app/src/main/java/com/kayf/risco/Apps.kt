@@ -110,8 +110,13 @@ class Apps(
         set(value) {
             if (field == value) return
             field = value
+            // Turning icons on reads every one fresh, which also picks up a new icon theme.
+            if (value && started) forget = true
             if (started) load()
         }
+
+    /** The next load ignores the cache and reads every app. */
+    private var forget = false
 
     /** Each app's name and icon from the last start, so only new or updated apps are read again. */
     private val cacheFile = AtomicFile(File(context.filesDir, "apps.cache"))
@@ -198,14 +203,18 @@ class Apps(
         val withIcons = icons
         val changedPackages = stale.toSet()
         stale.clear()
+        val ignoreCache = forget
+        forget = false
         // One load at a time, so two never write the cache at once.
-        thread(name = "apps") { synchronized(cacheFile) { read(generation, withIcons, changedPackages) } }
+        thread(name = "apps") {
+            synchronized(cacheFile) { read(generation, withIcons, changedPackages, ignoreCache) }
+        }
     }
 
-    private fun read(generation: Int, withIcons: Boolean, changedPackages: Set<String>) {
+    private fun read(generation: Int, withIcons: Boolean, changedPackages: Set<String>, ignoreCache: Boolean) {
         val header = AppCache.header(context.resources.configuration.locales.toLanguageTags(), iconSize, iconDpi)
         val cache = try {
-            cacheFile.openRead().use { AppCache.read(it, header) }
+            if (ignoreCache) AppCache.read(null, header) else cacheFile.openRead().use { AppCache.read(it, header) }
         } catch (e: IOException) {
             AppCache.read(null, header)
         }
