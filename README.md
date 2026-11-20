@@ -1,88 +1,111 @@
 # risco
 
-A one-handed Android launcher for people who'd rather not look for things. Every feature is free,
-nothing runs in the background, and there are no icons unless you ask: just names, under your thumb.
-
-Press the alphabet rail, slide to a letter, slide off to an app, let go. That's one stroke.
+A home screen for Android that you use with one thumb. Your apps are listed by name under the
+letters along the edge of the screen: slide to a letter, slide to the app, let go.
 
 <p align="center">
   <img src="docs/demo/demo.gif" alt="risco on a phone: one stroke from the rail opens Calculator; three apps called Authenticator look the same until :icons on shows which is Google's" width="360">
 </p>
+
+## TL;DR
+
+- **What it is:** a replacement for your phone's home screen. Instead of pages of icons, there's a
+  column of letters on the edge. Every app is one thumb stroke away, and the letters never move,
+  so your thumb learns where things are.
+- **Who it's for:** anyone who knows which app they want and doesn't want to hunt for it. It's
+  built for one-handed use, works with either thumb, and works with TalkBack.
+- **What it costs you:** nothing. It's free, has no ads, can't go online, and does nothing in the
+  background.
+- **How to get it:** download the APK from the latest release, open it, and type `:default` in
+  search when you want it as your home screen. Full steps are [below](#install).
+
+| Quick facts | |
+|---|---|
+| Download size | 145 KB |
+| Memory | About 30–50 MB while it's your home screen |
+| Battery | Nothing runs in the background, so it only uses battery while you're looking at it |
+| Internet | None. risco has no permission to go online, so nothing about you leaves the phone |
+| Permissions | Two: opening the notification shade, and asking Android to uninstall an app you chose |
+| Price | Free, no ads, open source ([GPL-3.0](LICENSE)) |
+| Phones | Android 11 or newer |
+| Languages | English, German, Portuguese, Spanish, French, Russian, Japanese |
 
 ## Install
 
 1. On your phone, open the [latest release](https://github.com/kayfgit/risco/releases/latest) and
    download `risco-<version>.apk`.
 2. Open the download. Android asks once to allow installs from your browser; allow it.
-3. Open risco to try it. It doesn't replace your launcher until you type `:default` in search and
-   pick it.
+3. Open risco to try it. It doesn't replace your home screen until you type `:default` in search
+   and pick it.
 
-To update, install the newer release the same way: your pins and settings stay. Android 11 or
-newer is needed.
+To update, install the newer release the same way: your pins and settings stay. To go back to
+your old home screen, type `:default` and pick it, or uninstall risco.
 
-A copy you build yourself is signed with a different key, so it can't update a release install or
-the other way round. Uninstall one before installing the other.
+## Using risco
 
-## Use
-
-| | |
+| To | Do this |
 |---|---|
-| Open an app | Press either rail, slide to its letter, slide off towards the list, slide to the app, let go |
-| Change your mind | Let go on the rail or past the far end of the list, or slide back onto the rail for another letter |
-| Search | Swipe up, type, Enter. Matches accents, word starts and initials (`gm` finds Google Maps) |
-| Notifications | Swipe down |
-| An app's shortcuts (New message, New tab…) | Hold the app on home or in search |
-| Add to home, hide, uninstall | Hold an app on home or in search |
-| Add a website or chat to home | Use the app's own "Add to home screen", then confirm. Hold it to remove it |
-| Rename an app or shortcut | Hold it, Rename. Search still finds it by its old name |
-| Wallpaper, widgets, icons | Hold empty space on home |
+| Open an app | Press the letters on either edge, slide to a letter, slide off towards the list, slide to the app, let go |
+| Change your mind | Let go on the letters or past the far end of the list, or slide back onto the letters for another one |
+| Search | Swipe up, type, press Enter. It ignores accents and matches word starts and initials (`gm` finds Google Maps) |
+| See notifications | Swipe down |
+| Use an app's shortcuts (New message, New tab…) | Hold the app on home or in search |
+| Add an app to home, hide it, or uninstall it | Hold the app on home or in search |
+| Add a website or chat to home | Use that app's own "Add to home screen", then confirm. Hold it to remove it |
+| Rename an app or shortcut | Hold it, then Rename. Search still finds it by its old name |
+| Change wallpaper, add widgets, turn icons on | Hold empty space on home |
 | Move, resize or remove a widget | Hold it, then drag it, drag a corner, or tap Remove. Tap elsewhere when done |
 
-Both edges are rails, one for each thumb, but only the one you used last is drawn. Press the other
-edge and it takes over. The list opens beside whichever rail you pressed. Letters never move, so
-your thumb learns where they are. A letter with no apps hands over to the closest one that has some.
+There are letters on both edges, one for each thumb, but only the one you used last is shown.
+Press the other edge and it takes over. A letter with no apps hands over to the nearest one that
+has some.
 
-The letters come from the phone's languages, plus A to Z: a Russian phone gets А to Я above A to
-Z, a Japanese one the kana rows. They depend only on the languages, never on which apps are
-installed. For a shorter rail, `:alphabet` picks one alphabet alone, and names in other scripts
-are spelled in it to find their letter ("Камера" goes under K on `:alphabet english`).
+The letters come from your phone's languages, plus A to Z: a Russian phone gets А to Я as well,
+a Japanese one the kana rows. For a shorter column, `:alphabet` picks one alphabet only, and
+names in other scripts are spelled in it ("Камера" goes under K on `:alphabet english`).
 
-risco is in English, German, Portuguese, Spanish, French, Russian and Japanese, and follows the
-phone unless `:language` gives it its own. Commands are typed in English in every language.
+risco follows your phone's language unless `:language` gives it its own. Commands are always
+typed in English.
 
-Shortcuts, from an app or added to home, need risco to be the default launcher (`:default`):
-Android only shares them with the home app.
+App shortcuts, and websites or chats added to home, need risco to be your home screen
+(`:default`): Android only shares them with the home screen.
 
-### With TalkBack or Switch Access
+### Commands
 
-Each letter on the drawn rail is a button: touch or swipe to it to hear "G, 10 apps", and
-double-tap for a menu of its apps. Search, notifications, and wallpaper and widgets are in the
-actions menu of every letter and pinned app, since swipes and holds on home go to TalkBack.
-A widget's actions menu moves, resizes and removes it a step at a time.
+Type these in search. Anything that takes an app suggests matches as you type, and Enter picks
+the one at the bottom.
 
-## Commands
-
-Type these in search. Anything that takes an app shows matches as you type, and Enter takes the
-one at the bottom.
-
-| Command | |
+| Command | What it does |
 |---|---|
 | `:pin <app>` / `:unpin <app>` | Add to or remove from home. `:unpin` also takes shortcuts |
 | `:rename <app>` | Give an app or shortcut your own name |
-| `:hide <app>` / `:unhide <app>` | Take off the rail and search, or bring back |
+| `:hide <app>` / `:unhide <app>` | Take an app off the letters and out of search, or bring it back |
 | `:info <app>` | Android's page for the app |
 | `:rm <app>` | Uninstall |
-| `:widget <widget>` | Add a widget to the top of home. Hold it to move, resize or remove it |
+| `:widget <widget>` | Add a widget to the top of home |
 | `:wallpaper` | The phone's wallpaper picker |
 | `:icons <on\|off>` | Grey icons beside app names. Off by default |
-| `:alphabet <name>` | The rail's letters: `default`, `english`, `russian`, `japanese`, `greek`, `korean`, `arabic`, `hebrew`, `hindi` or `thai` |
+| `:alphabet <name>` | Which letters to show: `default`, `english`, `russian`, `japanese`, `greek`, `korean`, `arabic`, `hebrew`, `hindi` or `thai` |
 | `:language` | Android's page for risco's own language (Android 13 and up) |
 | `:menu` | What holding empty space opens |
 | `:set` | Android settings |
-| `:default` | Choose the default launcher |
-| `:q` | Close |
+| `:default` | Choose your home screen |
+| `:q` | Close search |
 
-## Build
+### With TalkBack or Switch Access
+
+Each letter is a button: touch or swipe to it to hear "G, 10 apps", and double-tap for a menu of
+its apps. Search, notifications, and wallpaper and widgets are in the actions menu of every letter
+and pinned app, since swipes and holds on home go to TalkBack. A widget's actions menu moves,
+resizes and removes it a step at a time.
+
+---
+
+## For developers
+
+Everything below is for building, changing or reviewing risco.
+
+### Build
 
 You need JDK 17 and the Android SDK (platform 34, build-tools 34). Android Studio isn't needed.
 
@@ -93,10 +116,57 @@ You need JDK 17 and the Android SDK (platform 34, build-tools 34). Android Studi
 .\install-local.ps1             # build, install on the connected phone, open
 ```
 
-CI runs the format check, lint, tests and a release build on every pull request and push to
-`main`, and keeps the APK for two weeks under the run's artifacts.
+A copy you build yourself is signed with a different key from the releases, so it can't update a
+release install or the other way round. Uninstall one before installing the other. Installing
+doesn't replace the phone's launcher; that only happens with `:default`.
 
-Trying risco doesn't replace your launcher. It installs as a normal app until you run `:default`.
+### What's where
+
+```
+app/src/main/java/com/kayf/risco/   the app (Kotlin, no libraries beyond Kotlin's own)
+app/src/main/res/                   layouts, strings, and the six translations (values-xx)
+app/src/test/java/com/kayf/risco/   unit tests, run on the PC (Robolectric for Android parts)
+docs/design.md                      where risco might go next, with the reasoning
+docs/model.py, docs/usage.py        the timing model and launch statistics behind design.md
+docs/demo/                          the README's GIF and the scripts that record it
+.github/workflows/                  ci.yml for every push and PR, release.yml for tags
+install-local.ps1                   build, install and open on a connected phone
+```
+
+| File | |
+|---|---|
+| [Drag.kt](app/src/main/java/com/kayf/risco/Drag.kt) | The whole gesture, with no Android in it, so it's tested on the PC |
+| [RailView.kt](app/src/main/java/com/kayf/risco/RailView.kt) | Feeds touches to `Drag` and draws what it says |
+| [Alphabet.kt](app/src/main/java/com/kayf/risco/Alphabet.kt) | Which letters the rail shows, and which letter a name goes under |
+| [Fuzzy.kt](app/src/main/java/com/kayf/risco/Fuzzy.kt) | Search ranking and accent folding |
+| [Commands.kt](app/src/main/java/com/kayf/risco/Commands.kt) | The `:` line |
+| [Apps.kt](app/src/main/java/com/kayf/risco/Apps.kt) | Installed apps, kept up to date by the system |
+| [Store.kt](app/src/main/java/com/kayf/risco/Store.kt) | Pins, hidden apps, names and settings, saved on the phone |
+| [Shortcuts.kt](app/src/main/java/com/kayf/risco/Shortcuts.kt) | App shortcuts and pinned websites or chats |
+| [Widgets.kt](app/src/main/java/com/kayf/risco/Widgets.kt) | Widgets on home, and how `:widget` names them |
+| [WidgetEditor.kt](app/src/main/java/com/kayf/risco/WidgetEditor.kt) | Moving and resizing a widget |
+| [Hold.kt](app/src/main/java/com/kayf/risco/Hold.kt) | A press held still, for home's menu and a widget's |
+| [HomeRoot.kt](app/src/main/java/com/kayf/risco/HomeRoot.kt) | Swipes and holds on home |
+| [Access.kt](app/src/main/java/com/kayf/risco/Access.kt) | TalkBack and Switch Access actions |
+| [PinActivity.kt](app/src/main/java/com/kayf/risco/PinActivity.kt) | Confirms a website or chat another app wants on home |
+| [MainActivity.kt](app/src/main/java/com/kayf/risco/MainActivity.kt) | Home, search and wiring |
+
+### Contributing
+
+Issues and pull requests are welcome.
+
+1. Make a branch for one change; nothing goes to `main` directly.
+2. Write a test with every feature. For a bug, write the failing test first, then fix it.
+3. Before pushing, run `spotlessApply`, `lint` and `test` (above). CI runs the same checks plus a
+   release build on every pull request, and keeps the APK for two weeks under the run's artifacts.
+4. Add a line under Unreleased in `CHANGELOG.md` saying what changed, in plain words.
+
+Two rules shape risco:
+
+- **Everything can be changed by the user.** Every behaviour or look needs a way to change it, as
+  a command or a gesture, not a preset menu.
+- **Plain words on screen.** Menus and messages use plain, capitalised words ("Uninstall", not
+  `rm`). Commands stay short because they're typed.
 
 ### Releasing
 
@@ -110,30 +180,18 @@ signed with the release key from the repository's secrets, checks the signature,
 release with the APK attached. The key and its password are also in `.env` (never committed) with
 the key file outside the repository; both need backing up, since a lost key means no more updates.
 
-## How it's put together
+### How the quick facts were measured
 
-| File | |
-|---|---|
-| [Drag.kt](app/src/main/java/com/kayf/risco/Drag.kt) | The whole gesture, with no Android in it, so it's tested on the PC |
-| [RailView.kt](app/src/main/java/com/kayf/risco/RailView.kt) | Feeds touches to `Drag` and draws what it says |
-| [Fuzzy.kt](app/src/main/java/com/kayf/risco/Fuzzy.kt) | Search ranking and accent folding |
-| [Commands.kt](app/src/main/java/com/kayf/risco/Commands.kt) | The `:` line |
-| [Apps.kt](app/src/main/java/com/kayf/risco/Apps.kt) | Installed apps, kept up to date by the system |
-| [Widgets.kt](app/src/main/java/com/kayf/risco/Widgets.kt) | Widgets on home, and how `:widget` names them |
-| [Hold.kt](app/src/main/java/com/kayf/risco/Hold.kt) | A press held still, for home's menu and a widget's |
-| [MainActivity.kt](app/src/main/java/com/kayf/risco/MainActivity.kt) | Home, search and wiring |
+On a Galaxy A36 (Android 17) with 108 apps installed, risco 0.2.0:
 
-No AndroidX, no Compose, no runtime dependencies beyond Kotlin itself.
-
-With gesture navigation, a swipe in from the edge means *back*, and Android lets an app opt out for
-only about 200dp per edge, less than a rail. The opt-out covers the bottom of each rail. Above it,
-sliding along the rail still works, because the back gesture only takes strokes moving inward.
-
-## License
-
-Copyright (C) 2026 Kayf
-
-risco is free software: you can redistribute it and/or modify it under the
-terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version. See [LICENSE](LICENSE).
+- **Download size:** `risco-0.2.0.apk` is 144,770 bytes. Release builds are shrunk with R8 and
+  use no libraries beyond Kotlin's own.
+- **Memory:** `adb shell dumpsys meminfo com.kayf.risco` with risco as the home screen settles at
+  27–52 MB (total PSS) within about a second of starting. In that first second the total reads
+  much higher, 150–290 MB, but most of it is `.apk mmap`: to read each app's name and icon,
+  Android maps that app's installed files into risco. Those pages are shared and read-only, so
+  the system can take them back at any time, and they're gone in under half a second. risco's own
+  memory (native and Java heap) peaks at around 40–55 MB while it reads every app.
+- **Background and internet:** the manifest has two activities and no services, receivers or
+  scheduled jobs, and asks only for `EXPAND_STATUS_BAR` and `REQUEST_DELETE_PACKAGES`, with no
+  `INTERNET`.
