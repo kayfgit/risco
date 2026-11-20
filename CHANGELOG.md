@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- risco remembers app names and icons between starts, so after a restart your apps are back in
+  about 0.2 seconds instead of up to 2, and it no longer briefly uses over 150 MB while reading
+  them. Turning icons on reads every icon again, which picks up a new icon theme.
 - With icons on, starting risco decodes app icons at the size they're drawn instead of at the
   screen's full density, so it briefly uses less memory and settles sooner.
 - The README opens with a short recording of risco in use, made by the scripts in `docs/demo`.
