@@ -22,7 +22,8 @@ letters along the edge of the screen: slide to a letter, slide to the app, let g
 | Quick facts | |
 |---|---|
 | Download size | 145 KB |
-| Memory | About 30–50 MB while it's your home screen |
+| Memory | About 40 MB while it's your home screen |
+| Start-up | Your apps are back about a fifth of a second after the phone restarts |
 | Battery | Nothing runs in the background, so it only uses battery while you're looking at it |
 | Internet | None. risco has no permission to go online, so nothing about you leaves the phone |
 | Permissions | Two: opening the notification shade, and asking Android to uninstall an app you chose |
@@ -182,16 +183,16 @@ the key file outside the repository; both need backing up, since a lost key mean
 
 ### How the quick facts were measured
 
-On a Galaxy A36 (Android 17) with 108 apps installed, risco 0.2.0:
+On a Galaxy A36 (Android 17) with 107 apps and icons on, with the phone unlocked:
 
-- **Download size:** `risco-0.2.0.apk` is 144,770 bytes. Release builds are shrunk with R8 and
-  use no libraries beyond Kotlin's own.
-- **Memory:** `adb shell dumpsys meminfo com.kayf.risco` with risco as the home screen settles at
-  27–52 MB (total PSS) within about a second of starting. In that first second the total reads
-  much higher, 150–290 MB, but most of it is `.apk mmap`: to read each app's name and icon,
-  Android maps that app's installed files into risco. Those pages are shared and read-only, so
-  the system can take them back at any time, and they're gone in under half a second. risco's own
-  memory (native and Java heap) peaks at around 40–55 MB while it reads every app.
+- **Download size:** `risco-0.2.0.apk` is 144,770 bytes; the current build is 149,326. Release
+  builds are shrunk with R8 and use no libraries beyond Kotlin's own.
+- **Memory:** `adb shell dumpsys meminfo com.kayf.risco`, sampled every ~0.15 s after
+  `am force-stop` and `am start`, peaks at 38–39 MB total PSS and settles at 38 MB. Without the
+  app cache (0.2.0), the first second read 150–290 MB, mostly `.apk mmap` from opening every
+  app's files to read its name and icon.
+- **Start-up:** timed from process start to the rail having every app, over 5 cold starts:
+  0.18–0.24 s with the cache, 0.82 s the first time (no cache yet), and 1.4–2.1 s in 0.2.0.
 - **Background and internet:** the manifest has two activities and no services, receivers or
   scheduled jobs, and asks only for `EXPAND_STATUS_BAR` and `REQUEST_DELETE_PACKAGES`, with no
   `INTERNET`.
