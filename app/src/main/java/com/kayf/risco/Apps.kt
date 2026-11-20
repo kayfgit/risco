@@ -7,6 +7,7 @@ import android.content.pm.LauncherApps
 import android.content.pm.LauncherApps.ShortcutQuery
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
@@ -16,7 +17,11 @@ import android.os.Looper
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
+import android.util.AtomicFile
 import android.util.Log
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
 import kotlin.concurrent.thread
 
 /**
@@ -108,11 +113,18 @@ class Apps(
             if (started) load()
         }
 
+    /** Each app's name and icon from the last start, so only new or updated apps are read again. */
+    private val cacheFile = AtomicFile(File(context.filesDir, "apps.cache"))
+
+    /** Packages Android says changed, read again on the next load even if their files didn't move. */
+    private val stale = mutableSetOf<String>()
+
     private val callback = object : LauncherApps.Callback() {
         override fun onPackageRemoved(packageName: String, user: UserHandle) = changed()
-        override fun onPackageAdded(packageName: String, user: UserHandle) = changed()
-        override fun onPackageChanged(packageName: String, user: UserHandle) = changed()
-        override fun onPackagesAvailable(packages: Array<String>, user: UserHandle, replacing: Boolean) = changed()
+        override fun onPackageAdded(packageName: String, user: UserHandle) = changed(packageName)
+        override fun onPackageChanged(packageName: String, user: UserHandle) = changed(packageName)
+        override fun onPackagesAvailable(packages: Array<String>, user: UserHandle, replacing: Boolean) =
+            changed(*packages)
         override fun onPackagesUnavailable(packages: Array<String>, user: UserHandle, replacing: Boolean) = changed()
         override fun onShortcutsChanged(packageName: String, shortcuts: List<ShortcutInfo>, user: UserHandle) =
             changed()
@@ -127,7 +139,8 @@ class Apps(
     fun stop() = launcher.unregisterCallback(callback)
 
     /** An update fires several callbacks in a row, which only need one reload. */
-    fun changed() {
+    fun changed(vararg packages: String) {
+        stale += packages
         main.removeCallbacks(reload)
         main.postDelayed(reload, 300)
     }
@@ -183,35 +196,80 @@ class Apps(
     private fun load() {
         val generation = ++latest
         val withIcons = icons
-        thread(name = "apps") {
-            val me = Process.myUserHandle()
-            val loaded = launcher.profiles.flatMap { user ->
-                launcher.getActivityList(null, user)
-                    .filter { it.applicationInfo.packageName != context.packageName }
-                    .map {
-                        val work = if (user == me) "" else workSuffix
-                        val original = it.label.toString().trim()
-                        val key = "${it.componentName.flattenToShortString()}@${users.getSerialNumberForUser(user)}"
-                        val label = displayLabel(original, names(key)) + work
-                        val icon = if (withIcons) icon(it) else null
-                        App(label, it.componentName, user, key, alphabet.letterOf(label), icon, original + work)
+        val changedPackages = stale.toSet()
+        stale.clear()
+        // One load at a time, so two never write the cache at once.
+        thread(name = "apps") { synchronized(cacheFile) { read(generation, withIcons, changedPackages) } }
+    }
+
+    private fun read(generation: Int, withIcons: Boolean, changedPackages: Set<String>) {
+        val header = AppCache.header(context.resources.configuration.locales.toLanguageTags(), iconSize, iconDpi)
+        val cache = try {
+            cacheFile.openRead().use { AppCache.read(it, header) }
+        } catch (e: IOException) {
+            AppCache.read(null, header)
+        }
+        val saved = HashMap<String, AppCache.Entry>()
+        var readAgain = 0
+        val me = Process.myUserHandle()
+        val loaded = launcher.profiles.flatMap { user ->
+            launcher.getActivityList(null, user)
+                .filter { it.applicationInfo.packageName != context.packageName }
+                .map {
+                    val work = if (user == me) "" else workSuffix
+                    val key = "${it.componentName.flattenToShortString()}@${users.getSerialNumberForUser(user)}"
+                    val source = it.applicationInfo.sourceDir.orEmpty()
+                    val changed = it.applicationInfo.packageName in changedPackages
+                    val cached = if (changed) null else cache.fresh(key, source, withIcons)
+                    val entry = cached ?: run {
+                        readAgain++
+                        AppCache.Entry(source, it.label.toString().trim(), if (withIcons) png(icon(it)) else null)
                     }
-            }.sortedBy { it.folded }
-            val pinned = launcher.profiles.flatMap { user ->
-                val serial = users.getSerialNumberForUser(user)
-                shortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user)
-                    .filter { it.isEnabled }
-                    .map { info ->
-                        val work = if (user == me) "" else workSuffix
-                        val original = shortcutLabel(info)
-                        val key = shortcutKey(info.`package`, info.id, serial)
-                        val icon = if (withIcons) shortcutIcon(info) else null
-                        Shortcut(displayLabel(original, names(key)) + work, info, key, icon, original + work)
-                    }
-            }
-            main.post { if (generation == latest) onChange(loaded, pinned) }
+                    saved[key] = entry
+                    val original = entry.label
+                    val label = displayLabel(original, names(key)) + work
+                    val icon = if (withIcons) entry.icon?.let(::bitmap) else null
+                    App(label, it.componentName, user, key, alphabet.letterOf(label), icon, original + work)
+                }
+        }.sortedBy { it.folded }
+        if (readAgain > 0 || saved.keys != cache.entries.keys) save(AppCache(header, saved))
+        val pinned = launcher.profiles.flatMap { user ->
+            val serial = users.getSerialNumberForUser(user)
+            shortcuts(ShortcutQuery().setQueryFlags(ShortcutQuery.FLAG_MATCH_PINNED), user)
+                .filter { it.isEnabled }
+                .map { info ->
+                    val work = if (user == me) "" else workSuffix
+                    val original = shortcutLabel(info)
+                    val key = shortcutKey(info.`package`, info.id, serial)
+                    val icon = if (withIcons) shortcutIcon(info) else null
+                    Shortcut(displayLabel(original, names(key)) + work, info, key, icon, original + work)
+                }
+        }
+        main.post { if (generation == latest) onChange(loaded, pinned) }
+    }
+
+    /** Saving can fail, such as with the storage full; the next start then just reads every app. */
+    private fun save(cache: AppCache) {
+        val out = try {
+            cacheFile.startWrite()
+        } catch (e: IOException) {
+            Log.w(TAG, "can't save the app cache", e)
+            return
+        }
+        try {
+            cache.write(out)
+            cacheFile.finishWrite(out)
+        } catch (e: IOException) {
+            Log.w(TAG, "can't save the app cache", e)
+            cacheFile.failWrite(out)
         }
     }
+
+    private fun png(icon: Bitmap?): ByteArray? = icon?.let {
+        ByteArrayOutputStream().also { out -> it.compress(Bitmap.CompressFormat.PNG, 100, out) }.toByteArray()
+    }
+
+    private fun bitmap(png: ByteArray): Bitmap? = BitmapFactory.decodeByteArray(png, 0, png.size)
 
     /** Small icons only need a low density; the screen's own decodes each one far bigger than it's drawn. */
     private val iconDpi = iconDensity(iconSize, metrics.densityDpi)
