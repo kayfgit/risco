@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- With icons on, starting risco decodes app icons at the size they're drawn instead of at the
+  screen's full density, so it briefly uses less memory and settles sooner.
 - The README opens with a short recording of risco in use, made by the scripts in `docs/demo`.
 - The README starts with a plain-words summary and quick facts (size, memory, battery, permissions)
   for people using risco, with building, contributing and releasing moved to a section for

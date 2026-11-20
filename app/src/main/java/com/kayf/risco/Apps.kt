@@ -213,11 +213,13 @@ class Apps(
         }
     }
 
-    /** In grey, so the icons sit with the white names instead of competing with them. */
-    private fun icon(info: LauncherActivityInfo): Bitmap? = grey(info.getIcon(metrics.densityDpi))
+    /** Small icons only need a low density; the screen's own decodes each one far bigger than it's drawn. */
+    private val iconDpi = iconDensity(iconSize, metrics.densityDpi)
 
-    private fun shortcutIcon(info: ShortcutInfo): Bitmap? =
-        grey(launcher.getShortcutIconDrawable(info, metrics.densityDpi))
+    /** In grey, so the icons sit with the white names instead of competing with them. */
+    private fun icon(info: LauncherActivityInfo): Bitmap? = grey(info.getIcon(iconDpi))
+
+    private fun shortcutIcon(info: ShortcutInfo): Bitmap? = grey(launcher.getShortcutIconDrawable(info, iconDpi))
 
     private fun grey(icon: Drawable?): Bitmap? = runCatching {
         val drawable = icon!!.mutate()
@@ -230,3 +232,17 @@ class Apps(
 }
 
 private const val TAG = "risco"
+
+/** Android's standard densities, from mdpi to xxxhdpi. */
+private val STANDARD_DPIS = listOf(160, 240, 320, 480, 640)
+
+/**
+ * The density to ask for an icon at, so it's drawn at [size] pixels without decoding more than
+ * that: the smallest standard density whose 48dp launcher icon covers [size], and never more than
+ * the screen's [screenDpi]. At the screen's own density, a 62px icon on a 450dpi phone was decoded
+ * from layers about 430px across, around 1.5 MB each, for every app at once.
+ */
+fun iconDensity(size: Int, screenDpi: Int): Int {
+    val enough = STANDARD_DPIS.firstOrNull { 48 * it / 160 >= size } ?: screenDpi
+    return minOf(enough, screenDpi)
+}
